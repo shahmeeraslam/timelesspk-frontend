@@ -1,92 +1,93 @@
 import React from "react";
 import { Link } from "react-router-dom";
-import { RiAddLine, RiFocus3Line, RiPaletteLine } from "@remixicon/react";
+import { RiAddLine, RiFocus3Line, RiPaletteLine, RiInformationLine } from "@remixicon/react";
 
 const ProductCard = ({ item, addToCart }) => {
   const productId = item._id?.$oid || item._id || item.id;
   
-  // --- UPDATED IMAGE LOGIC ---
-  // Safely extract the first image URL from the new tagged structure
+  // Safe Image Extraction
   const productImg = Array.isArray(item.image) 
     ? (typeof item.image[0] === 'object' ? item.image[0].url : item.image[0])
     : (item.image || item.img);
 
-  // Count available color variations
   const colorCount = item.colors?.length || 0;
 
   return (
-    <div className="group relative flex flex-col selection:bg-white selection:text-black">
-      <Link to={`/product/${productId}`} className="relative block overflow-hidden">
+    <div className="group relative flex flex-col h-full selection:bg-white selection:text-black">
+      {/* Clickable Image Area */}
+      <Link to={`/product/${productId}`} className="relative block flex-grow">
         
         {/* --- IMAGE CONTAINER --- */}
-        <div className="relative aspect-[3/4] overflow-hidden bg-[#0a0a0a] border border-white/5 transition-all duration-700 group-hover:border-white/20">
+        <div className="relative aspect-[3/4] overflow-hidden bg-[#0a0a0a] border border-white/5 md:group-hover:border-[var(--brand-main)]/30 transition-all duration-700">
           
-          {/* Blueprint Grid Overlay */}
-          <div className="absolute inset-0 opacity-0 group-hover:opacity-[0.03] pointer-events-none transition-opacity duration-700"
-               style={{ backgroundImage: `radial-gradient(white 1px, transparent 1px)`, backgroundSize: '16px 16px' }} />
+          {/* Blueprint Grid Overlay - Always visible at 1% on mobile for texture */}
+          <div className="absolute inset-0 opacity-[0.01] md:opacity-0 md:group-hover:opacity-[0.04] pointer-events-none transition-opacity duration-700"
+               style={{ backgroundImage: `radial-gradient(white 1px, transparent 1px)`, backgroundSize: '20px 20px' }} />
 
-          {/* Product Image */}
+          {/* Product Image: Uses 'will-change-transform' for smoother mobile scaling */}
           <img
             src={productImg || "https://via.placeholder.com/400x533?text=Archive_Unit"}
             alt={item.name}
-            className="w-full h-full object-cover grayscale group-hover:grayscale-0 scale-[1.01] group-hover:scale-110 transition-all duration-[1.5s] ease-out"
+            className="w-full h-full object-cover grayscale opacity-80 md:group-hover:opacity-100 md:group-hover:grayscale-0 scale-[1.02] md:group-hover:scale-110 transition-all duration-[1.2s] ease-[cubic-bezier(0.19,1,0.22,1)] will-change-transform"
           />
 
-          {/* Interactive UI Overlays */}
-          <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-          
-          {/* Top-Left: Unit ID */}
-          <div className="absolute top-4 left-4 flex items-center gap-2">
-             <div className="w-1 h-1 bg-white rounded-full animate-pulse" />
-             <span className="text-[7px] font-mono uppercase text-white/60 tracking-[0.3em] backdrop-blur-md px-2 py-1 border border-white/10">
+          {/* --- SMART OVERLAYS --- */}
+          {/* Mobile Status Tag (Top-Left) */}
+          <div className="absolute top-3 left-3 flex items-center gap-1.5 px-2 py-1 bg-black/40 backdrop-blur-md border border-white/10 rounded-sm">
+             <div className="w-1 h-1 bg-[var(--brand-main)] rounded-full animate-pulse" />
+             <span className="text-[6px] font-mono uppercase text-white/80 tracking-widest">
                ID_{String(productId).slice(-4).toUpperCase()}
              </span>
           </div>
 
-          {/* Top-Right: Color Count Badge (New) */}
+          {/* Color Indicator (Top-Right) */}
           {colorCount > 1 && (
-            <div className="absolute top-4 right-4 flex items-center gap-1.5 opacity-0 group-hover:opacity-100 transition-all duration-500 translate-x-2 group-hover:translate-x-0">
-              <span className="text-[7px] font-mono uppercase text-white/40 tracking-widest">{colorCount}_FINISHES</span>
-              <RiPaletteLine size={10} className="text-white/40" />
+            <div className="absolute top-3 right-3 flex items-center gap-1.5 opacity-60 md:opacity-0 md:group-hover:opacity-100 transition-all duration-500">
+              <span className="text-[6px] font-mono text-white tracking-widest uppercase">{colorCount}_FINISHES</span>
+              <RiPaletteLine size={10} className="text-[var(--brand-main)]" />
             </div>
           )}
 
-          {/* Bottom-Left: Technical Specs (Category) */}
-          <div className="absolute bottom-6 left-6 translate-y-4 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all duration-500">
-             <p className="text-[7px] font-mono text-white/40 uppercase tracking-[0.5em] mb-1 text-[8px]">Classification</p>
-             <p className="text-[11px] font-serif italic text-white uppercase tracking-[0.2em]">{item.category}</p>
+          {/* Bottom Info Bar (Mobile Visible / Desktop Hover) */}
+          <div className="absolute bottom-0 left-0 right-0 p-4 md:p-6 translate-y-2 md:translate-y-4 opacity-100 md:opacity-0 md:group-hover:translate-y-0 md:group-hover:opacity-100 transition-all duration-500 bg-gradient-to-t from-black/80 to-transparent">
+             <div className="flex items-center gap-2 mb-1 opacity-60">
+                <RiInformationLine size={10} className="text-[var(--brand-main)]" />
+                <p className="text-[7px] font-mono text-white uppercase tracking-[0.3em]">UNIT_CLASSIFICATION</p>
+             </div>
+             <p className="text-[10px] md:text-[12px] font-serif italic text-white uppercase tracking-[0.1em]">{item.category || "General Archive"}</p>
           </div>
 
-          {/* Corner Brackets (Animated) */}
-          <div className="absolute top-0 right-0 w-8 h-8 border-t border-r border-white/20 opacity-0 group-hover:opacity-100 transition-all duration-700 scale-150 group-hover:scale-100" />
-          <div className="absolute bottom-0 left-0 w-8 h-8 border-b border-l border-white/20 opacity-0 group-hover:opacity-100 transition-all duration-700 scale-150 group-hover:scale-100" />
+          {/* Corner HUD Brackets */}
+          <div className="absolute top-0 right-0 w-6 h-6 border-t border-r border-white/20 opacity-0 md:group-hover:opacity-100 transition-all duration-700" />
+          <div className="absolute bottom-0 left-0 w-6 h-6 border-b border-l border-white/20 opacity-0 md:group-hover:opacity-100 transition-all duration-700" />
         </div>
 
         {/* --- METADATA FOOTER --- */}
-        <div className="mt-6 flex justify-between items-end">
-          <div className="space-y-1">
-            <h4 className="text-sm font-serif italic uppercase tracking-tighter text-white group-hover:tracking-normal transition-all duration-500">
-              {item.name}
-            </h4>
-            <div className="flex items-center gap-2 opacity-30">
-               <RiFocus3Line size={10} className="text-white" />
-               <span className="text-[8px] font-mono uppercase tracking-[0.2em] text-white">Deploy_Ready</span>
+        <div className="mt-5 space-y-4">
+          <div className="flex justify-between items-start gap-4">
+            <div className="space-y-1">
+                <h4 className="text-sm md:text-base font-serif italic uppercase tracking-tight text-white group-hover:text-[var(--brand-main)] transition-colors duration-500">
+                {item.name}
+                </h4>
+                <div className="flex items-center gap-2 opacity-30">
+                <RiFocus3Line size={10} className="animate-spin-slow" />
+                <span className="text-[7px] font-mono uppercase tracking-[0.2em]">Deploy_Ready</span>
+                </div>
             </div>
-          </div>
-          
-          <div className="flex flex-col items-end">
-             <span className="text-[10px] font-mono text-white/20 line-through tracking-tighter">$ {Math.round(item.price * 1.2)}.00</span>
-             <span className="text-lg font-serif italic text-white">${item.price?.toLocaleString()}.00</span>
+            
+            <div className="flex flex-col items-end shrink-0">
+                <span className="text-[10px] font-mono text-white/20 line-through tracking-tighter decoration-[var(--brand-main)]/40">$ {Math.round(item.price * 1.2)}.00</span>
+                <span className="text-lg font-serif italic text-white">${item.price?.toLocaleString()}</span>
+            </div>
           </div>
         </div>
       </Link>
 
       {/* --- ACTION BUTTON --- */}
-      <div className="mt-6 relative">
+      <div className="mt-6">
         <button
           onClick={(e) => {
             e.preventDefault();
-            // Defaulting to first color/size if not selected via card
             addToCart({ 
               ...item, 
               color: item.colors?.[0] || "Neutral", 
@@ -94,18 +95,22 @@ const ProductCard = ({ item, addToCart }) => {
               img: productImg 
             });
           }}
-          className="w-full group/btn relative overflow-hidden border border-white/10 py-4 flex items-center justify-center gap-3 transition-all duration-500 hover:border-white"
+          className="w-full group/btn relative overflow-hidden border border-white/10 py-3.5 flex items-center justify-center transition-all duration-500 hover:border-[var(--brand-main)]"
         >
-          {/* Button Background Fill */}
-          <div className="absolute inset-0 bg-white translate-y-full group-hover/btn:translate-y-0 transition-transform duration-500" />
+          {/* Subtle Glow Background */}
+          <div className="absolute inset-0 bg-white translate-y-full group-hover/btn:translate-y-0 transition-transform duration-500 ease-[cubic-bezier(0.19,1,0.22,1)]" />
           
-          {/* Button Content */}
           <span className="relative z-10 text-[9px] font-mono uppercase tracking-[0.4em] text-white group-hover/btn:text-black transition-colors duration-500 flex items-center gap-2">
-            <RiAddLine size={14} />
+            <RiAddLine size={14} className="group-hover/btn:rotate-90 transition-transform duration-500" />
             Acquire_Unit
           </span>
         </button>
       </div>
+
+      <style>{`
+        .animate-spin-slow { animation: spin 6s linear infinite; }
+        @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+      `}</style>
     </div>
   );
 };

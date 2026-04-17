@@ -1,217 +1,223 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import { useCart } from "../context/CartContext";
 import { useNavigate } from "react-router-dom";
 import PageTransition from "../components/PageTransition";
+import { RiLoader4Line, RiPhoneFill, RiWallet3Line } from "@remixicon/react";
+import API from "../../api";
 
 const PlaceOrder = () => {
   const { cart, cartTotal } = useCart();
   const navigate = useNavigate();
-  const [method, setMethod] = useState("stripe");
+  const [isProcessing, setIsProcessing] = useState(false);
+  
+  // Locked to COD as per requirements
+  const method = "cod";
+
+  const [formData, setFormData] = useState({
+    firstName: "", lastName: "", email: "", street: "",
+    city: "", state: "", zipcode: "", country: "Pakistan", phone: ""
+  });
+
+  // UX Options for Logistics
+  const PAKISTAN_STATES = ["Punjab", "Sindh", "KPK", "Balochistan", "Gilgit-Baltistan", "Azad Kashmir", "Islamabad Capital Territory"];
+  const MAJOR_CITIES = ["Karachi", "Lahore", "Islamabad", "Rawalpindi", "Faisalabad", "Multan", "Peshawar", "Quetta", "Sialkot", "Gujranwala"].sort();
+
+  const onInputChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handlePlaceOrder = async (e) => {
+    e.preventDefault();
+    setIsProcessing(true);
+    try {
+      const orderData = {
+        address: formData,
+        items: cart,
+        amount: cartTotal,
+        paymentMethod: method
+      };
+
+      const response = await API.post("/api/orders/place", orderData);
+      
+      if (response.data.success) {
+        navigate("/orders");
+      }
+    } catch (err) {
+      console.error("Order_Auth_Error:", err);
+      alert("TERMINAL_FAILURE: Could not initiate order sequence.");
+    } finally {
+      setIsProcessing(false);
+    }
+  };
 
   return (
     <PageTransition>
-      <div
-        style={{
-          backgroundColor: "var(--brand-alt)",
-          color: "var(--brand-main)",
-        }}
-        className="min-h-screen pt-28 pb-20 px-6 md:px-12"
-      >
-        <div className="max-w-7xl mx-auto flex flex-col lg:flex-row gap-20">
-          {/* LEFT SIDE: Delivery & Payment Details */}
-          <div className="w-full lg:w-3/5 space-y-12">
-            {/* Section 1: Delivery Information */}
-            <div>
-              <h2
-                style={{ color: "var(--brand-muted)" }}
-                className="text-[10px] uppercase tracking-[0.5em] mb-8"
-              >
-                Pillar I — Delivery
-              </h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {[
-                  { placeholder: "First Name" },
-                  { placeholder: "Last Name" },
-                  { placeholder: "Email Address", full: true },
-                  { placeholder: "Street Address", full: true },
-                  { placeholder: "City" },
-                  { placeholder: "State / Province" },
-                  { placeholder: "Zip Code" },
-                  { placeholder: "Country" },
-                ].map((input, idx) => (
-                  <input
-                    key={idx}
-                    type="text"
-                    placeholder={input.placeholder}
-                    style={{
-                      borderColor: "var(--brand-border)",
-                      color: "var(--brand-main)",
-                    }}
-                    className={`bg-transparent border-b py-3 outline-none text-sm font-light focus:border-[var(--brand-main)] transition-colors ${input.full ? "md:col-span-2" : ""}`}
-                  />
-                ))}
+      <div className="min-h-screen pt-32 pb-20 px-6 md:px-12 bg-black text-white selection:bg-white selection:text-black">
+        <form onSubmit={handlePlaceOrder} className="max-w-[1400px] mx-auto flex flex-col lg:flex-row gap-24">
+          
+          {/* LEFT: Shipping and Verification Info */}
+          <div className="w-full lg:w-[60%] space-y-20">
+            <header className="space-y-4">
+              <div className="flex items-center gap-3 opacity-40">
+                <div className="w-12 h-[1px] bg-white" />
+                <span className="text-[9px] font-mono tracking-[0.5em] uppercase text-white">Order_Verification_v4.2</span>
               </div>
-            </div>
+              <h1 className="text-5xl font-serif italic tracking-tighter text-white">The Final Step</h1>
+            </header>
 
-            {/* Section 2: Payment Method Selection */}
-            <div className="pt-8">
-              <h2
-                style={{ color: "var(--brand-muted)" }}
-                className="text-[10px] uppercase tracking-[0.5em] mb-8"
-              >
-                Pillar II — Payment
+            {/* Pillar I: Logistics with Enhanced Selection */}
+            <section className="space-y-10">
+              <h2 className="text-[10px] text-white uppercase tracking-[0.6em] flex items-center gap-4 font-bold">
+                Pillar I — Logistics <div className="h-[1px] flex-grow bg-white/20" />
               </h2>
-              <div className="flex flex-col md:flex-row gap-4">
-                {["stripe", "razorpay", "cod"].map((payment) => (
-                  <div
-                    key={payment}
-                    onClick={() => setMethod(payment)}
-                    style={{
-                      borderColor:
-                        method === payment
-                          ? "var(--brand-main)"
-                          : "var(--brand-border)",
-                      backgroundColor:
-                        method === payment
-                          ? "var(--brand-soft-bg)"
-                          : "transparent",
-                      opacity: method === payment ? 1 : 0.5,
-                    }}
-                    className="flex-1 border p-4 flex items-center justify-between cursor-pointer transition-all"
-                  >
-                    <span
-                      style={{ color: "var(--brand-main)" }}
-                      className="text-[10px] uppercase tracking-widest"
-                    >
-                      {payment === "cod" ? "Cash on Delivery" : payment}
-                    </span>
-                    <div
-                      style={{
-                        borderColor: "var(--brand-main)",
-                        backgroundColor:
-                          method === payment
-                            ? "var(--brand-main)"
-                            : "transparent",
-                      }}
-                      className="w-3 h-3 rounded-full border"
-                    ></div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-8">
+                {/* Standard Inputs */}
+                {[
+                  { name: "firstName", placeholder: "First Name" },
+                  { name: "lastName", placeholder: "Last Name" },
+                  { name: "email", placeholder: "Email_Link", full: true, type: "email" },
+                  { name: "street", placeholder: "Street_Address_House_No", full: true },
+                ].map((field) => (
+                  <div key={field.name} className={`flex flex-col gap-2 ${field.full ? "md:col-span-2" : ""}`}>
+                    <label className="text-[8px] font-mono uppercase tracking-widest text-white/50 pl-1">{field.placeholder}</label>
+                    <input
+                      required
+                      name={field.name}
+                      value={formData[field.name]}
+                      onChange={onInputChange}
+                      className="bg-transparent border-b border-white/30 py-3 outline-none text-sm font-light focus:border-white transition-all uppercase tracking-widest text-white"
+                    />
                   </div>
                 ))}
-              </div>
-            </div>
 
-            {/* Action Buttons */}
-            <div className="flex flex-col sm:flex-row gap-4 pt-10">
-              <button
-                onClick={() => navigate("/orders")}
-                style={{
-                  backgroundColor: "var(--brand-main)",
-                  color: "var(--brand-alt)",
-                }}
-                className="px-16 py-5 text-[10px] uppercase tracking-[0.4em] hover:opacity-90 transition-all"
-              >
-                Authorize Payment
-              </button>
-              <button
-                onClick={() => navigate("/")}
-                style={{
-                  borderColor: "var(--brand-main)",
-                  color: "var(--brand-main)",
-                }}
-                className="px-16 py-5 border text-[10px] uppercase tracking-[0.4em] hover:bg-[var(--brand-soft-bg)] transition-all"
-              >
-                Cancel
-              </button>
-            </div>
-          </div>
-
-          {/* RIGHT SIDE: Final Order Review (Sticky) */}
-          <div className="w-full lg:w-2/5">
-            <div
-              style={{ backgroundColor: "var(--brand-soft-bg)" }}
-              className="lg:sticky lg:top-32 p-8 md:p-12 space-y-8"
-            >
-              <h3
-                style={{
-                  color: "var(--brand-main)",
-                  borderColor: "var(--brand-border)",
-                }}
-                className="text-xl font-serif italic border-b pb-4"
-              >
-                The Archive Summary
-              </h3>
-
-              <div className="max-h-60 overflow-y-auto space-y-4 no-scrollbar">
-                {cart.map((item) => (
-                  <div
-                    key={item.id}
-                    className="flex justify-between items-center text-xs"
+                {/* City Selection */}
+                <div className="flex flex-col gap-2">
+                  <label className="text-[8px] font-mono uppercase tracking-widest text-white/50 pl-1">City</label>
+                  <select 
+                    name="city" required value={formData.city} onChange={onInputChange}
+                    className="bg-black border-b border-white/30 py-3 outline-none text-sm font-light focus:border-white transition-all uppercase tracking-widest text-white cursor-pointer"
                   >
-                    <div className="flex gap-4">
-                      <img
-                        src={item.img}
-                        className="w-10 h-14 object-cover grayscale"
-                      />
-                      <div>
-                        <p
-                          style={{ color: "var(--brand-main)" }}
-                          className="uppercase tracking-tighter"
-                        >
-                          {item.name}
-                        </p>
-                        <p style={{ color: "var(--brand-muted)" }}>
-                          Qty: {item.quantity}
-                        </p>
-                      </div>
-                    </div>
-                    <p
-                      style={{ color: "var(--brand-main)" }}
-                      className="font-serif italic"
-                    >
-                      ${item.price * item.quantity}
+                    <option value="" disabled>Select_City</option>
+                    {MAJOR_CITIES.map(city => <option key={city} value={city}>{city}</option>)}
+                    <option value="Other">Other...</option>
+                  </select>
+                </div>
+
+                {/* State Selection */}
+                <div className="flex flex-col gap-2">
+                  <label className="text-[8px] font-mono uppercase tracking-widest text-white/50 pl-1">State_Province</label>
+                  <select 
+                    name="state" required value={formData.state} onChange={onInputChange}
+                    className="bg-black border-b border-white/30 py-3 outline-none text-sm font-light focus:border-white transition-all uppercase tracking-widest text-white cursor-pointer"
+                  >
+                    <option value="" disabled>Select_State</option>
+                    {PAKISTAN_STATES.map(state => <option key={state} value={state}>{state}</option>)}
+                  </select>
+                </div>
+
+                {/* ZIP & Country */}
+                <div className="flex flex-col gap-2">
+                  <label className="text-[8px] font-mono uppercase tracking-widest text-white/50 pl-1">Zip_Code</label>
+                  <input name="zipcode" required value={formData.zipcode} onChange={onInputChange} className="bg-transparent border-b border-white/30 py-3 outline-none text-sm text-white uppercase tracking-widest" />
+                </div>
+                
+                <div className="flex flex-col gap-2">
+                  <label className="text-[8px] font-mono uppercase tracking-widest text-white/50 pl-1">Country</label>
+                  <input name="country" readOnly value={formData.country} className="bg-transparent border-b border-white/10 py-3 outline-none text-sm text-white/40 uppercase tracking-widest cursor-not-allowed" />
+                </div>
+
+                <div className="flex flex-col gap-2 md:col-span-2">
+                  <label className="text-[8px] font-mono uppercase tracking-widest text-white/50 pl-1">Mobile_Contact (Verification Required)</label>
+                  <input name="phone" required type="tel" value={formData.phone} onChange={onInputChange} placeholder="03XXXXXXXXX" className="bg-transparent border-b border-white/30 py-3 outline-none text-sm text-white uppercase tracking-widest" />
+                </div>
+              </div>
+            </section>
+
+            {/* Pillar II: Transaction Protocol (COD Notice) */}
+            <section className="space-y-10">
+              <h2 className="text-[10px] text-white uppercase tracking-[0.6em] flex items-center gap-4 font-bold">
+                Pillar II — Protocol <div className="h-[1px] flex-grow bg-white/20" />
+              </h2>
+              
+              <div className="bg-white/5 border border-white/10 p-8 space-y-6">
+                <div className="flex items-start gap-4">
+                  <div className="p-3 bg-white text-black shrink-0"><RiPhoneFill size={20} /></div>
+                  <div>
+                    <h4 className="text-[10px] font-mono uppercase tracking-widest mb-1">Verification_Protocol</h4>
+                    <p className="text-xs text-white/70 leading-relaxed font-light">
+                      After placing this order, you will receive a <span className="text-white font-bold italic">Verification Call</span> from our team. Your selection will not be dispatched until confirmed via telephone.
                     </p>
                   </div>
-                ))}
-              </div>
+                </div>
 
-              <div
-                style={{ borderColor: "var(--brand-border)" }}
-                className="space-y-3 pt-4 border-t"
-              >
-                <div className="flex justify-between text-xs tracking-widest">
-                  <span style={{ color: "var(--brand-muted)" }}>Subtotal</span>
-                  <span style={{ color: "var(--brand-main)" }}>
-                    ${cartTotal}
-                  </span>
-                </div>
-                <div className="flex justify-between text-xs tracking-widest">
-                  <span style={{ color: "var(--brand-muted)" }}>Shipping</span>
-                  <span
-                    style={{ color: "var(--brand-main)" }}
-                    className="uppercase"
-                  >
-                    Complimentary
-                  </span>
-                </div>
-                <div
-                  style={{ color: "var(--brand-main)" }}
-                  className="flex justify-between text-lg font-bold pt-4"
-                >
-                  <span>Total</span>
-                  <span className="font-serif italic">${cartTotal}</span>
+                <div className="flex items-start gap-4">
+                  <div className="p-3 bg-white/10 text-white shrink-0"><RiWallet3Line size={20} /></div>
+                  <div>
+                    <h4 className="text-[10px] font-mono uppercase tracking-widest mb-1">Payment_Mode</h4>
+                    <p className="text-xs text-white/70 leading-relaxed font-light">
+                      Cash on Delivery is active. <span className="text-white font-bold">EasyPaisa</span> transfers will be available and facilitated during the confirmation call if you prefer digital settlement.
+                    </p>
+                  </div>
                 </div>
               </div>
+            </section>
 
-              <p
-                style={{ color: "var(--brand-muted)" }}
-                className="text-[9px] uppercase tracking-[0.2em] text-center leading-relaxed"
+            <div className="pt-6">
+              <button
+                disabled={isProcessing}
+                type="submit"
+                className="group flex items-center justify-center gap-4 w-full md:w-auto px-20 py-6 bg-white text-black text-[10px] font-bold uppercase tracking-[0.5em] hover:bg-zinc-200 transition-all disabled:opacity-50"
               >
-                * By authorizing payment, you agree to the <br /> Bold_Comfort
-                terms of heritage and service.
-              </p>
+                {isProcessing ? (
+                  <RiLoader4Line className="animate-spin" size={16} />
+                ) : (
+                  <>Complete Order Selection</>
+                )}
+              </button>
             </div>
           </div>
-        </div>
+
+          {/* RIGHT: Summary Archive */}
+          <aside className="w-full lg:w-[40%]">
+            <div className="lg:sticky lg:top-32 bg-[#0A0A0A] border border-white/10 p-10 space-y-10 shadow-2xl">
+              <div className="space-y-2">
+                <h3 className="text-2xl font-serif italic text-white">Archive Summary</h3>
+                <p className="text-[9px] font-mono text-white/40 uppercase tracking-widest">Inventory_Check_Verified</p>
+              </div>
+
+              <div className="space-y-6 max-h-[400px] overflow-y-auto no-scrollbar">
+                {cart.map((item, i) => {
+                  const pData = item.productId && typeof item.productId === 'object' ? item.productId : item;
+                  const displayImg = pData.image?.[0]?.url || pData.img || item.img;
+                  return (
+                    <div key={i} className="flex gap-6 items-center">
+                      <div className="w-16 h-20 bg-black border border-white/10 flex-shrink-0 overflow-hidden">
+                        <img src={displayImg} className="w-full h-full object-cover grayscale" alt="" />
+                      </div>
+                      <div className="flex-grow space-y-1">
+                        <p className="text-[11px] uppercase tracking-wider text-white font-bold leading-tight">{pData.name}</p>
+                        <p className="text-[9px] font-mono text-white/60 italic uppercase">{item.size} — Qty {item.quantity}</p>
+                      </div>
+                      <p className="font-serif italic text-sm text-white">${(pData.price * item.quantity).toLocaleString()}</p>
+                    </div>
+                  );
+                })}
+              </div>
+
+              <div className="border-t border-white/10 pt-8 space-y-4">
+                <div className="flex justify-between text-[10px] font-mono tracking-widest text-white/60">
+                  <span>SUBTOTAL_VALUATION</span>
+                  <span className="text-white">${cartTotal.toLocaleString()}.00</span>
+                </div>
+                <div className="flex justify-between items-baseline pt-6 border-t border-white/20">
+                  <span className="text-[10px] font-mono tracking-[0.4em] uppercase text-white/80">Total_Due</span>
+                  <span className="text-3xl font-serif italic text-white">${cartTotal.toLocaleString()}.00</span>
+                </div>
+              </div>
+            </div>
+          </aside>
+        </form>
       </div>
     </PageTransition>
   );

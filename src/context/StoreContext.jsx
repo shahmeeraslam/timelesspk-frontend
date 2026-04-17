@@ -1,32 +1,38 @@
 import React, { createContext, useState, useContext, useEffect } from 'react';
+import API from '../../api'; 
 
 const StoreContext = createContext();
 
 export const StoreProvider = ({ children }) => {
-  // --- New Global UI States ---
-  const [adminImg, setAdminImg] = useState(null); // Stores the final saved image URL
+  const [adminImg, setAdminImg] = useState(null);
   const [isDarkMode, setIsDarkMode] = useState(true);
+  const [products, setProducts] = useState([]);
+  const [orders, setOrders] = useState([]);
 
-  // --- Inventory & Orders ---
-  const [products, setProducts] = useState([
-    { id: 1, name: "Heritage Wool Coat", category: "Clothing", price: 450, stock: 12 },
-    { id: 2, name: "Mid-Century Oak Chair", category: "Furniture", price: 1200, stock: 4 },
-    { id: 3, name: "Silk Archive Scarf", category: "Accessories", price: 180, stock: 0 },
-  ]);
+  const fetchOrders = async () => {
+  try {
+    // Ensure '/api' is included if it's not in your axios baseURL
+    const response = await API.get('/api/orders/list'); 
+    
+    const orderData = response.data?.success ? response.data.orders : response.data;
+    setOrders(Array.isArray(orderData) ? orderData : []);
+  } catch (error) {
+     console.error("Archive_Sync_Failure:", error);
+  }
+};
 
-  const [orders, setOrders] = useState([
-    { id: "ORD-9922", date: "Apr 04", customer: "Shahmeer ALi", total: 1450, status: "Processing" },
-    { id: "ORD-9921", date: "Apr 04", customer: "Zainab Ahmed", total: 1450, status: "Processing" },
-  ]);
+  useEffect(() => {
+    fetchOrders();
+  }, []);
 
   return (
     <StoreContext.Provider value={{ 
       products, setProducts, 
       orders, setOrders, 
+      fetchOrders,
       adminImg, setAdminImg, 
       isDarkMode, setIsDarkMode 
     }}>
-      {/* This div ensures the theme variables apply to everything inside the provider */}
       <div className={isDarkMode ? 'theme-dark' : 'theme-light'}>
         {children}
       </div>
