@@ -23,42 +23,34 @@ const Login = () => {
    */
   const handleAuthSuccess = (data) => {
     try {
-      // 1. Robust Extraction
-      // backend now sends: { token: "...", user: { ... } }
-      const token = data.token;
-      const userData = data.user;
+      const { token, user: userData } = data;
 
       if (!token || !userData) {
-        throw new Error("Missing authentication credentials in server response.");
+        throw new Error("Credentials_Incomplete");
       }
 
-      // 2. Clear stale data to prevent 'role' or 'token' mismatches
-      localStorage.removeItem("user");
-      localStorage.removeItem("token");
-      localStorage.removeItem("userInfo");
+      // 1. Clear everything for a clean slate
+      localStorage.clear();
 
-      // 3. Commit to Storage (Required before Context or Redirect)
+      // 2. Atomic Writes
       localStorage.setItem("token", token);
       localStorage.setItem("user", JSON.stringify(userData));
 
-      // 4. Sync React Context
-      // Wrapped in try/catch to ensure a context crash doesn't stop the redirect
-      try {
-        if (setUser) setUser(userData);
-      } catch (contextErr) {
-        console.warn("CartContext update failed, but proceeding to redirect:", contextErr);
-      }
+      // 3. Update React Context
+      if (setUser) setUser(userData);
 
-      // 5. Final Redirect
-      // Admin goes to inventory, standard user goes home
+      // 4. Delayed Navigation
+      // This ensures the localStorage write is confirmed by the browser 
+      // before the page reloads/redirects.
       const target = userData.role === "admin" ? "/admin/inventory" : "/";
       
-      // replace prevents the user from clicking 'back' into the login screen
-      window.location.replace(target);
+      setTimeout(() => {
+        window.location.replace(target);
+      }, 150);
 
     } catch (err) {
-      console.error("Critical Auth Success Error:", err);
-      setError("An unexpected error occurred during sign-in.");
+      console.error("Auth_Sync_Error:", err);
+      setError("Terminal Sync Error. Please retry.");
     }
   };
 
