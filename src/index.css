@@ -1,0 +1,45 @@
+@import "tailwindcss";
+
+a.active hr{
+   display: block;
+}
+@layer base {
+  :root {
+    /* The Background: Deep, infinite midnight */
+    --brand-alt: #020b19;        
+    
+    /* The Ink: Clean, optic off-white for high legibility */
+    --brand-main: #f8f9fa;       
+    
+    /* Secondary Details: Desaturated slate for technical metadata */
+    --brand-muted: #a0a0a0;      
+    
+    /* The Linen Border: Subtle deep navy to define sections without glare */
+    --brand-border: #1a2e47;     
+
+    /* Section Contrast: Transparent navy for card depth */
+    --brand-soft-bg: rgba(4, 30, 66, 0.4); 
+
+    /* The Metal: High-end gold for CTAs and status nodes */
+    --brand-accent: #D4AF37;     
+
+    /* Clean transition for any dynamic state changes */
+    transition: all 0.4s ease-in-out;
+    
+    /* Force background to stay dark */
+    background-color: var(--brand-alt);
+    color: var(--brand-main);
+  }
+}
+.fade-in-img {
+  opacity: 0;
+  transition: opacity 0.8s ease-in-out;
+}
+
+.fade-in-img.loaded {
+  opacity: 1;
+}
+
+body{
+  overflow-x: hidden;
+}
