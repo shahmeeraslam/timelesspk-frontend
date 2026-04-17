@@ -3,7 +3,6 @@ import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import { RiGoogleFill, RiMailLine, RiLockLine, RiArrowLeftLine } from "@remixicon/react";
 import { useGoogleLogin } from '@react-oauth/google';
-import axios from "axios";
 import { useCart } from "../context/CartContext"; 
 import PageTransition from "../components/PageTransition";
 
