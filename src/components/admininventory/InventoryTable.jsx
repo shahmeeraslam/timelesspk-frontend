@@ -1,10 +1,16 @@
 import API from "../../../api"
 import React from 'react';
-import { RiEditLine, RiDeleteBin7Line, RiEyeLine, RiInboxArchiveLine } from "@remixicon/react";
+import { 
+  RiEditLine, 
+  RiDeleteBin7Line, 
+  RiEyeLine, 
+  RiInboxArchiveLine, 
+  RiQrCodeLine 
+} from "@remixicon/react";
 
-const InventoryTable = ({ products, loading, isAdmin, onEdit, onPreview, setProducts, setToast }) => {
+const InventoryTable = ({ products, loading, onEdit, onPreview, onShowQR, setProducts, setToast }) => {
   
-const handleDelete = async (id) => {
+  const handleDelete = async (id) => {
     const confirmRemoval = window.confirm(
       "CRITICAL_ACTION: This will permanently decommission this unit from the digital archive. Proceed?"
     );
@@ -12,21 +18,18 @@ const handleDelete = async (id) => {
     if (!confirmRemoval) return;
     
     try {
-      // API handles baseURL, headers, and tokens automatically
       await API.delete(`/api/products/${id}`);
-
-      // Update local state immediately for a responsive UI
       setProducts(prev => prev.filter(p => p._id !== id));
       setToast("Unit_Decommissioned_Successfully");
     } catch (err) {
       console.error("Removal_Failure:", err);
-      // More descriptive error handling
       const errorMsg = err.response?.status === 403 
         ? "Security_Error: Insufficient_Clearance" 
         : "Terminal_Failure: Could_Not_Sync_Deletion";
       setToast(errorMsg);
     }
   };
+
   if (loading) return (
     <div className="py-40 flex flex-col items-center justify-center gap-4 opacity-20">
       <div className="w-12 h-[1px] bg-white animate-pulse" />
@@ -43,13 +46,13 @@ const handleDelete = async (id) => {
             <th className="py-6 px-4 text-left text-[9px] font-mono uppercase tracking-[0.4em] text-white/30 font-normal">Classification</th>
             <th className="py-6 px-4 text-left text-[9px] font-mono uppercase tracking-[0.4em] text-white/30 font-normal">Piece_Identity</th>
             <th className="py-6 px-4 text-left text-[9px] font-mono uppercase tracking-[0.4em] text-white/30 font-normal">Valuation</th>
+            <th className="py-6 px-4 text-left text-[9px] font-mono uppercase tracking-[0.4em] text-white/30 font-normal">System_Link</th>
             <th className="py-6 px-4 text-left text-[9px] font-mono uppercase tracking-[0.4em] text-white/30 font-normal">Availability</th>
             <th className="py-6 px-8 text-right text-[9px] font-mono uppercase tracking-[0.4em] text-white/30 font-normal">Controls</th>
           </tr>
         </thead>
         <tbody className="divide-y divide-white/[0.03]">
           {products.map((product) => {
-            // FIX: Handle the new Tagged Color System object array
             const displayImage = product.image?.[0]?.url || product.img;
 
             return (
@@ -97,6 +100,17 @@ const handleDelete = async (id) => {
                   </span>
                 </td>
 
+                {/* QR TRIGGER COLUMN */}
+                <td className="py-6 px-4">
+                  <button 
+                    onClick={() => onShowQR(product)}
+                    className="group/qr flex items-center gap-2 px-3 py-1.5 border border-white/5 hover:border-white/20 hover:bg-white/5 transition-all"
+                  >
+                    <RiQrCodeLine size={14} className="opacity-20 group-hover/qr:opacity-100 transition-opacity" />
+                    <span className="text-[8px] font-mono uppercase tracking-widest opacity-0 group-hover/qr:opacity-100 transition-opacity">Generate_Tag</span>
+                  </button>
+                </td>
+
                 {/* STOCK */}
                 <td className="py-6 px-4">
                   <div className="flex items-center gap-2">
@@ -117,7 +131,6 @@ const handleDelete = async (id) => {
                     >
                       <RiEditLine size={18} />
                     </button>
-                    {/* Only show delete if the user is verified as Admin */}
                     <button 
                       onClick={() => handleDelete(product._id)}
                       className="text-white/10 hover:text-red-500 transition-colors"
