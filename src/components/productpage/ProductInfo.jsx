@@ -36,7 +36,7 @@ const ProductInfo = ({ product, selectedSize, setSelectedSize, selectedColor, se
                 />
               ))}
             </div>
-            <span className="text-[9px] font-mono text-white/40 tracking-widest uppercase">
+            <span className="text-[5px] md:text-xs font-mono text-white/40 tracking-widest uppercase">
               {product.numReviews || 0}_Impressions
             </span>
           </div>
