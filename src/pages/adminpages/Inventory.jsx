@@ -1,3 +1,4 @@
+import API from "../../../api"
 import React, { useState, useEffect, useCallback } from "react";
 import { useStore } from "../../context/StoreContext";
 import axios from "axios";
@@ -8,7 +9,7 @@ import InventoryTable from "../../components/admininventory/InventoryTable";
 import AdminProductModal from "../../components/admininventory/AdminProductModal";
 import ProductPreviewPortal from "../../components/admininventory/ProductPreviewPortal";
 
-const API_URL = "http://localhost:5000/api/products";
+
 
 const Inventory = () => {
   const { products, setProducts } = useStore();
@@ -26,15 +27,16 @@ const Inventory = () => {
   const fetchArchive = useCallback(async () => {
     try {
       setLoading(true);
-      const response = await axios.get(API_URL);
+      // Logic now points to the cloud automatically
+      const response = await API.get("/api/products");
       setProducts(response.data);
     } catch (err) {
+      console.error("Archive_Fetch_Error:", err);
       setToast("Terminal_Connection_Error");
     } finally {
       setLoading(false);
     }
   }, [setProducts]);
-
   useEffect(() => { 
     fetchArchive(); 
   }, [fetchArchive]);

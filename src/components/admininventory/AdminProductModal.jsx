@@ -1,5 +1,5 @@
+import API from "../../../api"
 import React, { useState, useEffect } from "react";
-import axios from "axios";
 import { 
   RiCloseLine, RiLink, RiImageAddLine, RiFilmLine, 
   RiHashtag, RiPriceTag3Line, RiArchiveDrawerLine, RiPaletteLine 
@@ -84,22 +84,24 @@ const AdminProductModal = ({ isOpen, onClose, editingProduct, setProducts, setTo
   // --- PERSISTENCE ---
   const handleSubmit = async (e) => {
     e.preventDefault();
-    const token = localStorage.getItem("token");
-    const config = { headers: { Authorization: `Bearer ${token}` } };
     
     try {
       if (editingProduct) {
-        const res = await axios.put(`http://localhost:5000/api/products/${editingProduct._id}`, formData, config);
+        // Automatically uses the live/local URL and attaches the Admin token
+        const res = await API.put(`/api/products/${editingProduct._id}`, formData);
         setProducts(prev => prev.map(p => p._id === editingProduct._id ? res.data : p));
         setToast("Archive_Updated_Success");
       } else {
-        const res = await axios.post(`http://localhost:5000/api/products`, formData, config);
+        const res = await API.post(`/api/products`, formData);
         setProducts(prev => [res.data, ...prev]);
         setToast("New_Unit_Archived");
       }
       onClose();
     } catch (err) {
-      setToast("Terminal_Sync_Error: Payload_Likely_Too_Large");
+      // Improved error checking
+      const errorMsg = err.response?.data?.message || "Terminal_Sync_Error";
+      setToast(errorMsg);
+      console.error("Persistence_Failure:", err);
     }
   };
 

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import axios from "axios"; // Ensure axios is installed
+import API from "../../../api"; // Path to your api.js
 import { RiArrowRightUpLine, RiFlashlightLine, RiLoader4Line } from "@remixicon/react";
 
 const Highlights = () => {
@@ -11,10 +11,10 @@ const Highlights = () => {
   useEffect(() => {
     const fetchHighlights = async () => {
       try {
-        // Replace with your actual API endpoint
-        // e.g., fetching featured products or products by category
-        const response = await axios.get("http://localhost:5000/api/products?featured=true");
-        setItems(response.data.slice(0, 3)); // Taking first 3 for the Bento Grid
+        setLoading(true);
+        // Uses the centralized baseURL (localhost or Vercel)
+        const response = await API.get("/api/products?featured=true");
+        setItems(response.data.slice(0, 3)); 
       } catch (error) {
         console.error("Extraction_Error:", error);
       } finally {
@@ -24,6 +24,8 @@ const Highlights = () => {
 
     fetchHighlights();
   }, []);
+
+  
 
   if (loading) return <HighlightSkeleton />;
 

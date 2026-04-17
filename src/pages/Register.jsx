@@ -1,3 +1,4 @@
+import API from "../../api";
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { RiGoogleFill, RiArrowLeftLine } from "@remixicon/react";
@@ -53,54 +54,56 @@ const Register = () => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setLoading(true);
-    setError("");
-    try {
-      await axios.post("http://localhost:5000/api/auth/register", formData);
-      setStep(2); 
-    } catch (err) {
-      setError(err.response?.data?.message || "Registration failed");
-    } finally {
-      setLoading(false);
-    }
-  };
+ const handleSubmit = async (e) => {
+  e.preventDefault();
+  setLoading(true);
+  setError("");
+  try {
+    // Uses the baseURL from api.js automatically
+    await API.post("/api/auth/register", formData);
+    setStep(2); 
+  } catch (err) {
+    setError(err.response?.data?.message || "Registration failed");
+  } finally {
+    setLoading(false);
+  }
+};
 
-  const handleVerifyOTP = async (e) => {
-    e.preventDefault();
+// --- 2. OTP Verification ---
+const handleVerifyOTP = async (e) => {
+  e.preventDefault();
+  setLoading(true);
+  setError("");
+  try {
+    const { data } = await API.post("/api/auth/verify-otp", {
+      email: formData.email,
+      otp: otp
+    });
+    
+    handleAuthSuccess(data);
+  } catch (err) {
+    setError(err.response?.data?.message || "Invalid or expired code");
+  } finally {
+    setLoading(false);
+  }
+};
+
+// --- 3. Google Signup ---
+const handleGoogleSignup = useGoogleLogin({
+  onSuccess: async (tokenResponse) => {
     setLoading(true);
-    setError("");
     try {
-      const { data } = await axios.post("http://localhost:5000/api/auth/verify-otp", {
-        email: formData.email,
-        otp: otp
+      const { data } = await API.post("/api/auth/google", {
+        token: tokenResponse.access_token,
       });
-      
-      // Use the shared logic
       handleAuthSuccess(data);
     } catch (err) {
-      setError(err.response?.data?.message || "Invalid or expired code");
+      setError("Google signup failed");
     } finally {
       setLoading(false);
     }
-  };
-
-  const handleGoogleSignup = useGoogleLogin({
-    onSuccess: async (tokenResponse) => {
-      setLoading(true);
-      try {
-        const { data } = await axios.post("http://localhost:5000/api/auth/google", {
-          token: tokenResponse.access_token,
-        });
-        handleAuthSuccess(data);
-      } catch (err) {
-        setError("Google signup failed");
-      } finally {
-        setLoading(false);
-      }
-    },
-  });
+  },
+});
 
   return (
     <PageTransition>

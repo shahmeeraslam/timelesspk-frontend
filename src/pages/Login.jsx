@@ -1,3 +1,4 @@
+import API from "../../api";
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import { RiGoogleFill, RiMailLine, RiLockLine, RiArrowLeftLine } from "@remixicon/react";
@@ -62,61 +63,57 @@ const Login = () => {
     }
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setLoading(true);
-    setError("");
-    try {
-      const { data } = await axios.post("http://localhost:5000/api/auth/login", { email, password });
-      
-      if (data.requiresVerification) {
-        setStep(2); // Show OTP input
-      } else {
-        handleAuthSuccess(data);
-      }
-    } catch (err) {
-      setError(err.response?.data?.message || "Login Failed");
-    } finally {
-      setLoading(false);
+ const handleSubmit = async (e) => {
+  e.preventDefault();
+  setLoading(true);
+  setError("");
+  try {
+    // Just use the relative path now!
+    const { data } = await API.post("/api/auth/login", { email, password });
+    
+    if (data.requiresVerification) {
+      setStep(2);
+    } else {
+      handleAuthSuccess(data);
     }
-  };
+  } catch (err) {
+    setError(err.response?.data?.message || "Login Failed");
+  } finally {
+    setLoading(false);
+  }
+};
 
-  const handleVerifyOTP = async (e) => {
-    e.preventDefault();
+ const handleVerifyOTP = async (e) => {
+  e.preventDefault();
+  setLoading(true);
+  setError("");
+  try {
+    const { data } = await API.post("/api/auth/verify-otp", { email, otp });
+    handleAuthSuccess(data);
+  } catch (err) {
+    setError(err.response?.data?.message || "Invalid or expired code");
+  } finally {
+    setLoading(false);
+  }
+};
+
+const handleGoogleLogin = useGoogleLogin({
+  onSuccess: async (tokenResponse) => {
     setLoading(true);
     setError("");
     try {
-      const { data } = await axios.post("http://localhost:5000/api/auth/verify-otp", {
-        email,
-        otp
+      const { data } = await API.post("/api/auth/google", {
+        token: tokenResponse.access_token,
       });
       handleAuthSuccess(data);
     } catch (err) {
-      setError(err.response?.data?.message || "Invalid or expired code");
+      setError("Google authentication failed.");
     } finally {
       setLoading(false);
     }
-  };
-
-  const handleGoogleLogin = useGoogleLogin({
-    onSuccess: async (tokenResponse) => {
-      setLoading(true);
-      setError("");
-      try {
-        // Sending the access_token to our backend to verify/create the user
-        const { data } = await axios.post("http://localhost:5000/api/auth/google", {
-          token: tokenResponse.access_token,
-        });
-        handleAuthSuccess(data);
-      } catch (err) {
-        console.error("Google Auth Error:", err.response?.data);
-        setError("Google authentication failed. Please try again.");
-      } finally {
-        setLoading(false);
-      }
-    },
-    onError: () => setError("Google Login was interrupted."),
-  });
+  },
+  onError: () => setError("Google Login was interrupted."),
+});
 
   return (
     <PageTransition>

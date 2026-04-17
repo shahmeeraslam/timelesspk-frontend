@@ -1,3 +1,4 @@
+import API  from "../../api";
 import React, { useState, useEffect } from "react";
 import axios from "axios"; 
 import { useCart } from "../context/CartContext"; 
@@ -22,14 +23,15 @@ const Home = () => {
   const [loading, setLoading] = useState(true);
 
   // 1. Database Synchronization
-  useEffect(() => {
+ useEffect(() => {
     const syncDatabase = async () => {
       try {
-        const response = await axios.get("http://localhost:5000/api/products");
+        setLoading(true);
+        // 2. Use API instance with a relative path
+        const response = await API.get("/api/products");
         const data = response.data;
         setProducts(data);
         
-        // Default the Lookbook to the first product in the list
         if (data.length > 0) {
           setActiveArchive(data[0]);
         }

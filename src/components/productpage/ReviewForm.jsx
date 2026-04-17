@@ -1,5 +1,5 @@
+import API from "../../../api"; 
 import React, { useState, useMemo, useRef, useEffect } from "react";
-import axios from "axios";
 import { useCart } from "../../context/CartContext"; 
 import { RiStarFill, RiSendPlaneLine, RiImageAddLine, RiCloseLine } from "@remixicon/react";
 
@@ -35,9 +35,9 @@ const ReviewForm = ({ productId, onReviewAdded }) => {
     }
   };
 
-  const handleSubmit = async (e) => {
+const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!auth.user || !auth.token) {
+    if (!auth.user) {
       alert("Authentication required to archive impression.");
       return;
     }
@@ -53,17 +53,15 @@ const ReviewForm = ({ productId, onReviewAdded }) => {
     if (imageFile) formData.append("image", imageFile);
 
     try {
-      const config = {
-        headers: {
-          "Content-Type": "multipart/form-data",
-          Authorization: `Bearer ${auth.token}`, 
-        },
-      };
-
-      await axios.post(
-        `http://localhost:5000/api/products/${productId}/reviews`,
+      // API instance handles baseURL and Auth token automatically
+      await API.post(
+        `/api/products/${productId}/reviews`,
         formData,
-        config
+        {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+        }
       );
 
       setComment("");
@@ -79,7 +77,6 @@ const ReviewForm = ({ productId, onReviewAdded }) => {
       setLoading(false);
     }
   };
-
   if (!auth.user) return (
     <div className="py-10 border-t border-white/5">
       <p className="text-[10px] font-mono uppercase tracking-[0.3em] text-white/20">

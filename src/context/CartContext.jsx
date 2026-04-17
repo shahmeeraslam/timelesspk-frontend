@@ -1,5 +1,5 @@
+import API from "../../api"
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
-import axios from 'axios';
 
 const CartContext = createContext();
 
@@ -15,37 +15,27 @@ export const CartProvider = ({ children }) => {
   });
 
   // --- 1. FETCH CART FROM NEW COLLECTION ---
+// --- 1. FETCH CART FROM NEW COLLECTION ---
   const fetchCart = useCallback(async () => {
-    const token = localStorage.getItem('token');
-    if (token && token !== "null") {
-      try {
-        const res = await axios.get("http://localhost:5000/api/cart", {
-          headers: { Authorization: `Bearer ${token}` }
-        });
-        // Backend returns cart.items
-        setCart(res.data || []);
-      } catch (err) {
-        console.error("Error fetching cart:", err.message);
-      }
+    try {
+      // The interceptor handles the token automatically
+      const res = await API.get("/api/cart");
+      setCart(res.data || []);
+    } catch (err) {
+      console.error("Error fetching cart:", err.message);
+      // If the token is invalid or expired, the interceptor could handle the logout
     }
   }, []);
 
-  // --- 2. DATABASE SYNC FUNCTION (Updated Endpoint) ---
+  // --- 2. DATABASE SYNC FUNCTION ---
   const syncCartWithDB = async (updatedCart) => {
-    const token = localStorage.getItem('token');
-    if (token && token !== "null") {
-      try {
-        // We now send { items: updatedCart } to match the new Cart model
-        await axios.put("http://localhost:5000/api/cart/sync", 
-          { items: updatedCart }, 
-          { headers: { Authorization: `Bearer ${token}` } }
-        );
-      } catch (err) {
-        console.error("Cloud Sync Error:", err.response?.data?.message || err.message);
-      }
+    try {
+      // API instance handles the production URL vs localhost switch
+      await API.put("/api/cart/sync", { items: updatedCart });
+    } catch (err) {
+      console.error("Cloud Sync Error:", err.response?.data?.message || err.message);
     }
   };
-
   // Load cart when user logs in or app starts
   useEffect(() => {
     if (user) {

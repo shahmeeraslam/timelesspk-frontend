@@ -1,7 +1,7 @@
+import API from "../../api"
 import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { useParams, Link } from "react-router-dom";
 import { useCart } from "../context/CartContext";
-import axios from "axios";
 import { AnimatePresence, motion } from "framer-motion";
 
 // Components
@@ -42,13 +42,16 @@ const Product = () => {
     return { type: 'image', url: img?.url };
   }, [activeMediaIndex, visibleImages, product]);
 
-  const fetchData = useCallback(async (silent = false) => {
+ const fetchData = useCallback(async (silent = false) => {
     try {
       if (!silent) setLoading(true);
+
+      // Using the centralized API instance instead of raw axios
       const [res, allRes] = await Promise.all([
-        axios.get(`http://localhost:5000/api/products/${id}`),
-        axios.get(`http://localhost:5000/api/products`)
+        API.get(`/api/products/${id}`),
+        API.get(`/api/products`)
       ]);
+
       setProduct(res.data);
       setAllProducts(allRes.data); 
 
@@ -57,13 +60,23 @@ const Product = () => {
         setSelectedColor(hasNeutral ? "Neutral" : res.data.colors?.[0] || "");
       }
 
+      // History Management
       const history = JSON.parse(localStorage.getItem("recently_viewed") || "[]");
-      const currentEntry = { _id: res.data._id, name: res.data.name, img: res.data.img || res.data.image?.[0]?.url };
+      const currentEntry = { 
+        _id: res.data._id, 
+        name: res.data.name, 
+        img: res.data.img || res.data.image?.[0]?.url 
+      };
+      
       const newHistory = [currentEntry, ...history.filter(p => p._id !== res.data._id)].slice(0, 5);
       localStorage.setItem("recently_viewed", JSON.stringify(newHistory));
       setRecentlyViewed(newHistory);
-    } catch (err) { console.error("Sync_Failure:", err); } 
-    finally { if (!silent) setLoading(false); }
+
+    } catch (err) { 
+      console.error("Sync_Failure:", err); 
+    } finally { 
+      if (!silent) setLoading(false); 
+    }
   }, [id, selectedColor]);
 
   useEffect(() => { 

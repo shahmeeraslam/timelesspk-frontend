@@ -1,3 +1,4 @@
+import API from "../../api"
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { useCart } from "../context/CartContext";
@@ -19,11 +20,12 @@ const Collection = () => {
   const { addToCart } = useCart();
 
   // --- ARCHIVE SYNCHRONIZATION (Fetch) ---
-  useEffect(() => {
+ useEffect(() => {
     const fetchProducts = async () => {
       try {
         setLoading(true);
-        const { data } = await axios.get("http://localhost:5000/api/products");
+        // Use the API instance and relative path
+        const { data } = await API.get("/api/products");
         setProducts(data);
       } catch (error) {
         console.error("Critical_Database_Error:", error);
@@ -33,7 +35,6 @@ const Collection = () => {
     };
     fetchProducts();
   }, []);
-
   // --- DATA PROCESSING (Filter & Sort) ---
   const filteredItems = products
     .filter((item) => {

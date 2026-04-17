@@ -1,11 +1,10 @@
+import API from "../../../api"
 import React from 'react';
 import { RiEditLine, RiDeleteBin7Line, RiEyeLine, RiInboxArchiveLine } from "@remixicon/react";
-import axios from "axios";
 
 const InventoryTable = ({ products, loading, isAdmin, onEdit, onPreview, setProducts, setToast }) => {
   
-  const handleDelete = async (id) => {
-    // A more aggressive warning to match the "Archive" aesthetic
+const handleDelete = async (id) => {
     const confirmRemoval = window.confirm(
       "CRITICAL_ACTION: This will permanently decommission this unit from the digital archive. Proceed?"
     );
@@ -13,25 +12,21 @@ const InventoryTable = ({ products, loading, isAdmin, onEdit, onPreview, setProd
     if (!confirmRemoval) return;
     
     try {
-      const token = localStorage.getItem("token");
-      
-      // Ensure the delete request hits your updated route
-      await axios.delete(`http://localhost:5000/api/products/${id}`, {
-        headers: { 
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json"
-        }
-      });
+      // API handles baseURL, headers, and tokens automatically
+      await API.delete(`/api/products/${id}`);
 
       // Update local state immediately for a responsive UI
       setProducts(prev => prev.filter(p => p._id !== id));
       setToast("Unit_Decommissioned_Successfully");
     } catch (err) {
       console.error("Removal_Failure:", err);
-      setToast("Security_Error: Action_Unauthorized_or_Terminal_Failure");
+      // More descriptive error handling
+      const errorMsg = err.response?.status === 403 
+        ? "Security_Error: Insufficient_Clearance" 
+        : "Terminal_Failure: Could_Not_Sync_Deletion";
+      setToast(errorMsg);
     }
   };
-
   if (loading) return (
     <div className="py-40 flex flex-col items-center justify-center gap-4 opacity-20">
       <div className="w-12 h-[1px] bg-white animate-pulse" />

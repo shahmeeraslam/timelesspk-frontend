@@ -1,6 +1,7 @@
+import API from "../../api"; // Path to your api.js
 import React, { useState, useEffect, useRef } from "react";
+import axios from "axios"; // Keep for Cloudinary only
 import { useNavigate } from "react-router-dom";
-import axios from "axios";
 import { useCart } from "../context/CartContext"; 
 import {
   RiUserLine,
@@ -60,6 +61,7 @@ const Profile = () => {
   }, [user, navigate]);
 
   // --- IMAGE UPLOAD LOGIC ---
+  // --- IMAGE UPLOAD LOGIC ---
   const handleImageChange = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
@@ -70,12 +72,12 @@ const Profile = () => {
     formData.append("upload_preset", "bold_comfort_preset"); 
 
     try {
+      // External call (Cloudinary) stays as raw axios
       const res = await axios.post("https://api.cloudinary.com/v1_1/dbz4txs3f/image/upload", formData);
       const imageUrl = res.data.secure_url;
-      const token = localStorage.getItem('token');
-      const config = { headers: { Authorization: `Bearer ${token}` } };
       
-      const { data } = await axios.put("http://localhost:5000/api/auth/update-image", { imgUrl: imageUrl }, config);
+      // Internal call (Backend) switches to API instance
+      const { data } = await API.put("/api/auth/update-image", { imgUrl: imageUrl });
 
       const updatedUser = { ...user, img: data.img || imageUrl };
       localStorage.setItem("user", JSON.stringify(updatedUser));
@@ -90,9 +92,8 @@ const Profile = () => {
   // --- NAME UPDATE LOGIC ---
   const handleUpdateName = async () => {
     try {
-      const token = localStorage.getItem('token');
-      const config = { headers: { Authorization: `Bearer ${token}` } };
-      const { data } = await axios.put("http://localhost:5000/api/auth/update-profile", { name: newName }, config);
+      // No need to manually grab token/headers anymore! API instance does it.
+      const { data } = await API.put("/api/auth/update-profile", { name: newName });
       
       const updatedUser = { ...user, name: data.name };
       localStorage.setItem("user", JSON.stringify(updatedUser));
@@ -106,9 +107,7 @@ const Profile = () => {
   // --- ADDRESS UPDATE LOGIC ---
   const handleAddressUpdate = async () => {
     try {
-      const token = localStorage.getItem('token');
-      const config = { headers: { Authorization: `Bearer ${token}` } };
-      const { data } = await axios.put("http://localhost:5000/api/auth/update-address", { address }, config);
+      const { data } = await API.put("/api/auth/update-address", { address });
       
       const updatedUser = { ...user, shippingAddress: data.shippingAddress };
       localStorage.setItem("user", JSON.stringify(updatedUser));
@@ -124,9 +123,7 @@ const Profile = () => {
     e.preventDefault();
     setPassError("");
     try {
-      const token = localStorage.getItem('token');
-      const config = { headers: { Authorization: `Bearer ${token}` } };
-      const { data } = await axios.put("http://localhost:5000/api/auth/change-password", passwords, config);
+      const { data } = await API.put("/api/auth/change-password", passwords);
       alert(data.message);
       setShowPasswordForm(false);
       setPasswords({ oldPassword: "", newPassword: "" });
