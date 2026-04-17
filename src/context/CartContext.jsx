@@ -1,6 +1,5 @@
-import API from "../../api"
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
-
+import API from "../../api"
 const CartContext = createContext();
 
 export const CartProvider = ({ children }) => {
