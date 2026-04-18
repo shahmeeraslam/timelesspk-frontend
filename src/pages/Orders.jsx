@@ -11,6 +11,7 @@ const Orders = () => {
     try {
       const response = await API.get("/api/orders/userorders");
       if (response.data.success) {
+        // Sorting by date descending (latest first)
         setOrders(response.data.orders.sort((a, b) => b.date - a.date));
       }
     } catch (error) {
@@ -56,13 +57,17 @@ const Orders = () => {
                 <div key={order._id} className="border-b border-white/5 pb-12 group">
                   <div className="flex flex-col lg:flex-row gap-12">
                     
-                    {/* Items Section - Updated for your latest JSON structure */}
+                    {/* Items Section */}
                     <div className="flex-grow space-y-8">
                       {order.items.map((item, i) => {
-                        // Fallback logic: check for item properties directly first, then productId
-                        const name = item.name || item.productId?.name || "Premium Piece";
-                        const price = item.price || item.productId?.price;
-                        const displayImg = item.image?.[0]?.url || item.img || item.productId?.image?.[0]?.url;
+                        /**
+                         * Logic updated to match your JSON structure:
+                         * Accessing data inside the populated 'productId' object
+                         */
+                        const product = item.productId;
+                        const name = product?.name || item.name || "Premium Piece";
+                        const price = product?.price || item.price;
+                        const displayImg = product?.img || product?.image?.[0]?.url || item.image?.[0]?.url;
                         
                         return (
                           <div key={i} className="flex gap-8 items-start">
@@ -83,7 +88,7 @@ const Orders = () => {
                                 <span>Color: {item.color}</span>
                               </div>
                               <p className="text-sm font-serif italic pt-2">
-                                ${price?.toLocaleString()}
+                                PKR {price?.toLocaleString()}
                               </p>
                             </div>
                           </div>
@@ -110,7 +115,7 @@ const Orders = () => {
 
                       <div className="space-y-1">
                         <p className="text-[8px] uppercase tracking-widest text-white/30">Valuation</p>
-                        <p className="text-lg font-serif italic">${order.amount.toLocaleString()}</p>
+                        <p className="text-lg font-serif italic">PKR {order.amount.toLocaleString()}</p>
                       </div>
 
                       <div className="col-span-full pt-4 border-t border-white/5">
@@ -133,7 +138,7 @@ const Orders = () => {
                         </div>
                       </div>
                       <a 
-                        href={`https://wa.me/03182349545?text=Hi, I want to confirm my order for $${order.amount}`}
+                        href={`https://wa.me/03182349545?text=Hi, I want to confirm my order for PKR ${order.amount}`}
                         target="_blank"
                         rel="noreferrer"
                         className="flex items-center gap-3 bg-black text-white px-6 py-3 text-[9px] uppercase tracking-[0.2em] font-bold hover:bg-zinc-800 transition-all w-full md:w-auto justify-center"

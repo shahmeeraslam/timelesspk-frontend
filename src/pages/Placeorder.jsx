@@ -1,12 +1,12 @@
 import React, { useState, useMemo } from "react";
-import { useCart } from "../context/CartContext";
+import { useCart  } from "../context/CartContext";
 import { useNavigate } from "react-router-dom";
 import PageTransition from "../components/PageTransition";
 import { RiLoader4Line, RiPhoneFill, RiWallet3Line } from "@remixicon/react";
 import API from "../../api";
 
 const PlaceOrder = () => {
-  const { cart, cartTotal } = useCart();
+const { cart, cartTotal, setCart } = useCart();
   const navigate = useNavigate();
   const [isProcessing, setIsProcessing] = useState(false);
   
@@ -27,7 +27,7 @@ const PlaceOrder = () => {
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
-  const handlePlaceOrder = async (e) => {
+ const handlePlaceOrder = async (e) => {
     e.preventDefault();
     setIsProcessing(true);
     try {
@@ -41,6 +41,11 @@ const PlaceOrder = () => {
       const response = await API.post("/api/orders/place", orderData);
       
       if (response.data.success) {
+        // Update 2: Use 'setCart' (the name defined in your Context)
+        if (setCart) {
+            setCart([]); 
+        }
+        
         navigate("/orders");
       }
     } catch (err) {
