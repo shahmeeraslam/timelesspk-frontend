@@ -1,9 +1,10 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import * as XLSX from 'xlsx'; // 1. Import XLSX
 import { useStore } from '../../context/StoreContext';
 import API from '../../../api'; 
 import { AnimatePresence, motion } from 'framer-motion';
 import { 
-  RiSearchLine, RiRefreshLine, RiInboxArchiveLine, RiCheckDoubleLine 
+  RiSearchLine, RiRefreshLine, RiInboxArchiveLine, RiCheckDoubleLine, RiDownload2Line 
 } from '@remixicon/react';
 
 // Sub-Components
@@ -22,7 +23,6 @@ const AdminOrders = () => {
     if (fetchOrders) fetchOrders();
   }, []);
 
-  // Auto-dismiss toast
   useEffect(() => {
     if (toast) {
       const timer = setTimeout(() => setToast(""), 3000);
@@ -30,13 +30,40 @@ const AdminOrders = () => {
     }
   }, [toast]);
 
-  /**
-   * Robust ID extractor for MongoDB $oid or standard strings
-   */
   const getOrderId = (order) => {
     if (!order) return "";
     const rawId = order._id?.$oid || order._id || order.id;
     return typeof rawId === 'string' ? rawId : String(rawId || "");
+  };
+
+  /**
+   * EXCEL EXPORT LOGIC
+   * Flattens the nested JSON structure into spreadsheet-friendly rows
+   */
+  const exportToExcel = () => {
+    if (filteredOrders.length === 0) return setToast("No_Data_To_Export");
+
+    const excelData = filteredOrders.map(o => ({
+      ORDER_ID: getOrderId(o),
+      DATE: new Date(o.date).toLocaleDateString('en-GB'),
+      CUSTOMER: `${o.address?.firstName} ${o.address?.lastName}`,
+      EMAIL: o.address?.email,
+      PHONE: o.address?.phone,
+      TOTAL_PKR: o.amount,
+      STATUS: o.status,
+      CITY: o.address?.city,
+      ADDRESS: `${o.address?.street}, ${o.address?.state}`,
+      ITEM_LOG: o.items.map(i => `${i.name} (${i.size}x${i.quantity})`).join(" | ")
+    }));
+
+    const worksheet = XLSX.utils.json_to_sheet(excelData);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Order_Manifest");
+
+    // Dynamic filename based on current filter
+    const fileName = `BC_Archive_${filterStatus.replace(/\s+/g, '_')}_${Date.now()}.xlsx`;
+    XLSX.writeFile(workbook, fileName);
+    setToast("Excel_Export_Successful");
   };
 
   const getStatusTheme = (status) => {
@@ -49,66 +76,57 @@ const AdminOrders = () => {
 
   const updateStatus = async (orderId, newStatus) => {
     try {
-      // Optimistic Update
       setOrders(prev => prev.map(o => getOrderId(o) === orderId ? { ...o, status: newStatus } : o));
-      
       if (selectedOrder && getOrderId(selectedOrder) === orderId) {
         setSelectedOrder(prev => ({ ...prev, status: newStatus }));
       }
-
       const response = await API.post('/api/orders/status', { orderId, status: newStatus });
-      
-      if (response.data.success) {
-        setToast(`Status Synchronized: ${newStatus}`);
-      }
+      if (response.data.success) setToast(`Status Synchronized: ${newStatus}`);
     } catch (error) {
       setToast("Terminal Error: Sync Failed");
       if (fetchOrders) fetchOrders(); 
     }
   };
 
-  /**
-   * Filter and Search Logic
-   * Uses memoization for performance on large archives
-   */
   const filteredOrders = useMemo(() => {
     if (!orders || !Array.isArray(orders)) return [];
-    
     return orders.filter(o => {
       const matchesStatus = filterStatus === "All" || o.status === filterStatus;
       const searchStr = searchTerm.toLowerCase();
-      
       const firstName = o.address?.firstName?.toLowerCase() || "";
       const email = o.address?.email?.toLowerCase() || "";
       const orderId = getOrderId(o).toLowerCase();
-      
-      return matchesStatus && (
-        orderId.includes(searchStr) || 
-        firstName.includes(searchStr) || 
-        email.includes(searchStr)
-      );
-    }).reverse(); // Latest orders first
+      return matchesStatus && (orderId.includes(searchStr) || firstName.includes(searchStr) || email.includes(searchStr));
+    }).reverse();
   }, [orders, filterStatus, searchTerm]);
 
   return (
     <div className="relative min-h-screen bg-[#050505] text-white selection:bg-white selection:text-black font-sans">
-      
-      {/* PRINT LAYER (Invisible on screen) */}
       <InvoicePrint order={selectedOrder} getOrderId={getOrderId} />
 
-      {/* DASHBOARD LAYER */}
       <div className={`p-6 lg:p-16 space-y-12 transition-all duration-700 print:hidden ${selectedOrder ? 'blur-2xl scale-[0.98] opacity-30 pointer-events-none' : ''}`}>
         <header className="flex flex-col lg:flex-row justify-between items-end gap-10">
           <div className="space-y-8 w-full">
             <div className="flex items-center gap-4">
               <span className="text-[9px] font-mono tracking-[0.5em] text-white/30 uppercase font-black">Archive_Protocol_v2.4</span>
               <div className="h-[1px] flex-grow bg-white/10" />
-              <button 
-                onClick={() => fetchOrders && fetchOrders()} 
-                className="flex items-center gap-2 text-[9px] font-mono text-white/40 hover:text-emerald-400 transition-colors uppercase tracking-widest"
-              >
-                <RiRefreshLine size={14} /> Re-Fetch_Logs
-              </button>
+              
+              <div className="flex items-center gap-6">
+                {/* EXCEL DOWNLOAD BUTTON */}
+                <button 
+                  onClick={exportToExcel}
+                  className="flex items-center gap-2 text-[9px] font-mono text-emerald-400 border border-emerald-500/20 px-4 py-2 bg-emerald-500/5 hover:bg-emerald-500/10 transition-all uppercase tracking-widest"
+                >
+                  <RiDownload2Line size={14} /> Download_XLSX
+                </button>
+
+                <button 
+                  onClick={() => fetchOrders && fetchOrders()} 
+                  className="flex items-center gap-2 text-[9px] font-mono text-white/40 hover:text-emerald-400 transition-colors uppercase tracking-widest"
+                >
+                  <RiRefreshLine size={14} /> Re-Fetch_Logs
+                </button>
+              </div>
             </div>
             
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
@@ -168,7 +186,6 @@ const AdminOrders = () => {
         </div>
       </div>
 
-      {/* SIDEBAR MODAL */}
       <AnimatePresence>
         {selectedOrder && (
           <OrderSidebar 
@@ -181,7 +198,6 @@ const AdminOrders = () => {
         )}
       </AnimatePresence>
 
-      {/* GLOBAL TOAST */}
       <AnimatePresence>
         {toast && (
           <motion.div 

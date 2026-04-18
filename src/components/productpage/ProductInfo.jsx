@@ -1,7 +1,21 @@
 import React from "react";
-import { RiAddLine, RiInformationLine, RiCheckLine, RiStarFill, RiRuler2Line } from "@remixicon/react";
+import { useNavigate } from "react-router-dom"; // 1. Import Navigation
+// import { useAuth } from "../context/AuthContext"; // 2. Assuming you have an AuthContext
+import { 
+  RiAddLine, 
+  RiInformationLine, 
+  RiCheckLine, 
+  RiStarFill, 
+  RiRuler2Line, 
+  RiPercentLine,
+  RiLockLine // Added for visual feedback on login requirement
+} from "@remixicon/react";
 
 const ProductInfo = ({ product, selectedSize, setSelectedSize, selectedColor, setSelectedColor, onAdd }) => {
+  const navigate = useNavigate();
+  // const { token } = useAuth(); // Replace with your actual auth state logic
+  const token = localStorage.getItem("token"); // Fallback check if context isn't ready
+  
   const sizes = ["S", "M", "L", "XL", "XXL"];
   
   const getSwatchStyle = (color) => {
@@ -11,6 +25,17 @@ const ProductInfo = ({ product, selectedSize, setSelectedSize, selectedColor, se
   };
 
   const isOutOfStock = product.stock <= 0;
+  const hasDiscount = product.discount > 0;
+
+  // --- AUTHENTICATION GATE ---
+  const handleAcquire = () => {
+    if (!token) {
+      // Redirect to login if token is missing
+      navigate("/login");
+      return;
+    }
+    onAdd();
+  };
 
   return (
     <div className="space-y-10 md:space-y-12 text-white selection:bg-white selection:text-black">
@@ -25,7 +50,6 @@ const ProductInfo = ({ product, selectedSize, setSelectedSize, selectedColor, se
             </span>
           </div>
 
-          {/* RATING METRICS */}
           <div className="flex items-center gap-3 group cursor-help">
             <div className="flex gap-0.5">
               {[...Array(5)].map((_, i) => (
@@ -46,19 +70,36 @@ const ProductInfo = ({ product, selectedSize, setSelectedSize, selectedColor, se
           {product.name}
         </h1>
         
-        <div className="flex items-center gap-4">
-          <span className="text-2xl font-light tracking-tighter text-white">
-            ${product.price?.toLocaleString()}.00
-          </span>
-          {isOutOfStock ? (
-            <span className="text-[9px] font-mono uppercase text-red-500 tracking-widest px-2 py-1 bg-red-500/10 border border-red-500/20">
-              DEPLETED
+        {/* VALUATION TERMINAL */}
+        <div className="space-y-4">
+          <div className="flex items-baseline gap-4">
+            <span className={`text-3xl font-light tracking-tighter ${hasDiscount ? 'text-[var(--brand-main)]' : 'text-white'}`}>
+              PKR {product.salePrice?.toLocaleString() || product.price?.toLocaleString()}.00
             </span>
-          ) : (
-             <span className="text-[9px] font-mono uppercase text-emerald-500/60 tracking-widest">
-              Available_In_Vault
-            </span>
-          )}
+            {hasDiscount && (
+              <span className="text-sm font-mono text-white/20 line-through decoration-white/40">
+                PKR {product.price?.toLocaleString()}
+              </span>
+            )}
+          </div>
+
+          <div className="flex flex-wrap gap-2">
+            {hasDiscount && (
+              <div className="flex items-center gap-2 px-2 py-1 bg-red-950/20 border border-red-500/30">
+                <RiPercentLine size={10} className="text-red-500" />
+                <span className="text-[8px] font-mono uppercase text-red-500 tracking-[0.2em]">Markdown: {product.discount}%_Reduction</span>
+              </div>
+            )}
+            {isOutOfStock ? (
+              <span className="text-[9px] font-mono uppercase text-red-500 tracking-widest px-2 py-1 bg-red-500/10 border border-red-500/20">
+                DEPLETED
+              </span>
+            ) : (
+               <span className="text-[9px] font-mono uppercase text-emerald-500/60 tracking-widest px-2 py-1 bg-emerald-500/5 border border-emerald-500/10">
+                In_Vault
+              </span>
+            )}
+          </div>
         </div>
       </header>
 
@@ -72,7 +113,6 @@ const ProductInfo = ({ product, selectedSize, setSelectedSize, selectedColor, se
         </div>
         
         <div className="flex flex-wrap gap-4 md:gap-5">
-          {/* NEUTRAL OPTION */}
           <button
             onClick={() => setSelectedColor("Neutral")}
             className={`group relative w-12 h-12 rounded-full border transition-all duration-500 flex items-center justify-center ${
@@ -81,14 +121,10 @@ const ProductInfo = ({ product, selectedSize, setSelectedSize, selectedColor, se
                 : 'border-white/10 hover:border-white/30'
             }`}
           >
-            <div 
-              className="w-8 h-8 rounded-full shadow-2xl transition-transform group-hover:scale-90 duration-500" 
-              style={getSwatchStyle("Neutral")} 
-            />
+            <div className="w-8 h-8 rounded-full shadow-2xl transition-transform group-hover:scale-90 duration-500" style={getSwatchStyle("Neutral")} />
             {selectedColor === "Neutral" && <RiCheckLine size={14} className="absolute text-white" />}
           </button>
 
-          {/* DYNAMIC COLORS */}
           {product.colors?.map((color) => (
             <button
               key={color}
@@ -99,10 +135,7 @@ const ProductInfo = ({ product, selectedSize, setSelectedSize, selectedColor, se
                   : 'border-white/10 hover:border-white/30'
               }`}
             >
-              <div 
-                className="w-8 h-8 rounded-full shadow-2xl transition-transform group-hover:scale-90 duration-500" 
-                style={getSwatchStyle(color)} 
-              />
+              <div className="w-8 h-8 rounded-full shadow-2xl transition-transform group-hover:scale-90 duration-500" style={getSwatchStyle(color)} />
               {selectedColor === color && <RiCheckLine size={14} className="absolute text-white mix-blend-difference" />}
             </button>
           ))}
@@ -138,18 +171,25 @@ const ProductInfo = ({ product, selectedSize, setSelectedSize, selectedColor, se
       {/* 4. PRIMARY ACTION */}
       <div className="pt-4 space-y-6">
         <button 
-          onClick={onAdd}
-          disabled={!selectedSize || !selectedColor || isOutOfStock}
+          onClick={handleAcquire} // Swapped onAdd for handleAcquire
+          disabled={(!selectedSize || !selectedColor || isOutOfStock) && token}
           className="group relative w-full overflow-hidden bg-white py-7 text-black transition-all active:scale-[0.98] disabled:opacity-20 disabled:cursor-not-allowed"
         >
-          {/* Slide-in Background */}
           <div className="absolute inset-0 bg-neutral-200 translate-y-full group-hover:translate-y-0 transition-transform duration-500 ease-out" />
-          
           <div className="relative z-10 flex items-center justify-center gap-4">
-            <RiAddLine size={18} className="group-hover:rotate-180 transition-transform duration-700" />
-            <span className="text-[11px] font-black uppercase tracking-[0.6em]">
-              {isOutOfStock ? "UNIT_DEPLETED" : "Acquire_Unit"}
-            </span>
+            {!token ? (
+              <>
+                <RiLockLine size={18} className="text-black/40" />
+                <span className="text-[11px] font-black uppercase tracking-[0.6em]">Login_to_Acquire</span>
+              </>
+            ) : (
+              <>
+                <RiAddLine size={18} className="group-hover:rotate-180 transition-transform duration-700" />
+                <span className="text-[11px] font-black uppercase tracking-[0.6em]">
+                  {isOutOfStock ? "UNIT_DEPLETED" : "Acquire_Unit"}
+                </span>
+              </>
+            )}
           </div>
         </button>
         

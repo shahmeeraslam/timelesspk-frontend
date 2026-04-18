@@ -7,7 +7,8 @@ import {
   RiLoader4Line, 
   RiCloseLine, 
   RiDownloadLine, 
-  RiQrCodeLine 
+  RiDeleteBin7Line,
+  RiCheckboxCircleLine
 } from "@remixicon/react";
 import { QRCodeSVG } from "qrcode.react";
 
@@ -23,7 +24,8 @@ const Inventory = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState(null);
   const [previewItem, setPreviewItem] = useState(null);
-  const [qrItem, setQrItem] = useState(null); // Added for QR logic
+  const [qrItem, setQrItem] = useState(null);
+  const [deleteConfirm, setDeleteConfirm] = useState(null); // Confirmation state
   const [loading, setLoading] = useState(true);
   const [toast, setToast] = useState("");
 
@@ -46,7 +48,22 @@ const Inventory = () => {
     fetchArchive(); 
   }, [fetchArchive]);
 
-  // QR Asset Download Logic
+  // DELETE LOGIC
+  const handleDelete = async (id) => {
+    try {
+      setToast("Purging_Record...");
+      const response = await API.delete(`/api/products/${id}`);
+      if (response.status === 200) {
+        setProducts(prev => prev.filter(p => p._id !== id));
+        setToast("Piece_Successfully_Purged");
+        setDeleteConfirm(null);
+      }
+    } catch (err) {
+      console.error("Delete_Error:", err);
+      setToast("Authorization_Failure");
+    }
+  };
+
   const downloadQR = () => {
     const svg = document.getElementById("product-qr");
     const svgData = new XMLSerializer().serializeToString(svg);
@@ -80,117 +97,122 @@ const Inventory = () => {
   }, [toast]);
 
   return (
-    <div className="min-h-screen bg-black text-white pt-32 pb-20 px-6 lg:px-12 selection:bg-white selection:text-black">
+    <div className="min-h-screen bg-black text-white pt-32 pb-20 px-6 lg:px-12 selection:bg-white selection:text-black font-sans">
       <div className="max-w-[1600px] mx-auto space-y-16">
         
         {/* EDITORIAL HEADER */}
-        <header className="flex flex-col md:flex-row md:items-end justify-between border-b border-white/5 pb-12 gap-8">
+        <header className="flex flex-col md:flex-row md:items-end justify-between border-b border-white/10 pb-12 gap-8">
           <div className="space-y-4">
             <div className="flex items-center gap-3 opacity-30">
               <div className="w-8 h-[1px] bg-white" />
-              <span className="text-[10px] font-mono tracking-[0.5em] uppercase italic">System_v2.4_QR_Integration_Live</span>
+              <span className="text-[10px] font-mono tracking-[0.5em] uppercase italic">Inventory_Nodes: {products.length} Units</span>
             </div>
-            <h1 className="text-6xl font-serif italic tracking-tighter leading-none">The Inventory</h1>
+            <h1 className="text-6xl font-serif italic tracking-tighter leading-none">Archive</h1>
           </div>
 
           <div className="flex flex-col sm:flex-row gap-6">
-            <div className="relative group">
-              <RiSearchLine className="absolute left-0 top-1/2 -translate-y-1/2 size-4 opacity-20 group-focus-within:opacity-100 transition-opacity" />
+            <div className="relative group border-b border-white/10 focus-within:border-white transition-all">
+              <RiSearchLine className="absolute left-0 top-1/2 -translate-y-1/2 size-4 opacity-20 group-focus-within:opacity-100" />
               <input 
                 type="text" 
-                placeholder="SEARCH_BY_NOMENCLATURE" 
-                className="bg-transparent border-b border-white/10 py-2 pl-8 outline-none text-[10px] font-mono tracking-widest w-64 focus:border-white transition-all placeholder:opacity-20 uppercase"
+                placeholder="FIND_NOMENCLATURE" 
+                className="bg-transparent py-2 pl-8 outline-none text-[10px] font-mono tracking-widest w-64 uppercase"
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
             </div>
             <button 
               onClick={() => { setEditingProduct(null); setIsModalOpen(true); }}
-              className="px-10 py-4 bg-white text-black text-[10px] font-bold uppercase tracking-[0.3em] hover:bg-[#e5e5e5] active:scale-95 transition-all shadow-[0_0_20px_rgba(255,255,255,0.1)]"
+              className="px-10 py-4 bg-white text-black text-[10px] font-black uppercase tracking-[0.4em] hover:bg-[var(--brand-accent)] transition-all"
             >
-              Add New Piece +
+              Add_Entry +
             </button>
           </div>
         </header>
 
-        {/* CATEGORY NAVIGATION */}
-        <nav className="flex items-center gap-10 overflow-x-auto no-scrollbar pb-4 border-b border-white/5">
+        {/* CATEGORY NAV */}
+        <nav className="flex items-center gap-10 overflow-x-auto no-scrollbar border-b border-white/5 pb-4">
           {["All", ...CATEGORIES].map((cat) => (
             <button
               key={cat}
               onClick={() => setActiveCategory(cat)}
-              className={`text-[9px] font-mono uppercase tracking-[0.4em] whitespace-nowrap transition-all flex items-center gap-2 ${
-                activeCategory === cat ? "text-white opacity-100" : "opacity-20 hover:opacity-100"
+              className={`text-[9px] font-mono uppercase tracking-[0.4em] transition-all flex items-center gap-2 ${
+                activeCategory === cat ? "text-white" : "opacity-20 hover:opacity-100"
               }`}
             >
-              {cat} {activeCategory === cat && <span className="size-1 bg-white rounded-full animate-pulse" />}
+              {cat} {activeCategory === cat && <div className="size-1 bg-white animate-pulse" />}
             </button>
           ))}
         </nav>
 
-        {/* LOADING STATE */}
+        {/* TABLE COMPONENT */}
         {loading ? (
-          <div className="h-64 flex flex-col items-center justify-center gap-4 border border-white/5 bg-white/[0.02]">
+          <div className="h-64 flex flex-col items-center justify-center gap-4 bg-white/[0.01] border border-white/5">
             <RiLoader4Line className="animate-spin text-white/20" size={32} />
-            <span className="text-[9px] font-mono uppercase tracking-[0.5em] text-white/20">Syncing_Records...</span>
+            <span className="text-[8px] font-mono uppercase tracking-[1em] text-white/20">Accessing_Data...</span>
           </div>
         ) : (
           <InventoryTable 
             products={filteredProducts}
-            loading={loading}
-            onEdit={(item) => {
-              setEditingProduct(item);
-              setIsModalOpen(true);
-            }}
+            onEdit={(item) => { setEditingProduct(item); setIsModalOpen(true); }}
             onPreview={(item) => setPreviewItem(item)}
-            onShowQR={(item) => setQrItem(item)} // FIXED: Passed the function here
-            setProducts={setProducts}
-            setToast={setToast}
+            onShowQR={(item) => setQrItem(item)}
+            onDelete={(item) => setDeleteConfirm(item)} // Trigger confirmation modal
           />
         )}
       </div>
 
-      {/* QR MODAL PORTAL */}
+      {/* DELETE CONFIRMATION MODAL */}
       <AnimatePresence>
-        {qrItem && (
-          <div className="fixed inset-0 z-[600] flex items-center justify-center p-6">
+        {deleteConfirm && (
+          <div className="fixed inset-0 z-[700] flex items-center justify-center p-6 bg-black/90 backdrop-blur-md">
             <motion.div 
-              initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-              className="absolute inset-0 bg-black/95 backdrop-blur-sm"
-              onClick={() => setQrItem(null)}
-            />
-            <motion.div 
-              initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }}
-              className="relative bg-[#0A0A0A] border border-white/10 p-12 max-w-sm w-full text-center space-y-8 shadow-2xl"
+              initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 20 }}
+              className="bg-[#0D0D0D] border border-red-900/50 p-10 max-w-md w-full text-center space-y-8"
             >
-              <button onClick={() => setQrItem(null)} className="absolute top-4 right-4 opacity-30 hover:opacity-100 transition-opacity">
-                <RiCloseLine size={24} />
-              </button>
-
+              <RiDeleteBin7Line className="mx-auto text-red-600 animate-bounce" size={40} />
               <div className="space-y-2">
-                <p className="text-[10px] font-mono tracking-[0.3em] opacity-30 uppercase">Product_Asset_Tag</p>
-                <h3 className="text-xl font-serif italic text-white/90">{qrItem.name}</h3>
-              </div>
-
-              <div className="bg-white p-4 inline-block mx-auto rounded-sm">
-                <QRCodeSVG 
-                  id="product-qr"
-                  value={`${window.location.origin}/product/${qrItem._id}`} 
-                  size={200}
-                  level={"H"}
-                />
-              </div>
-
-              <div className="space-y-3">
-                <button 
-                  onClick={downloadQR}
-                  className="flex items-center justify-center gap-3 w-full bg-white text-black py-4 text-[9px] font-mono font-bold tracking-[0.2em] uppercase hover:bg-zinc-200 transition-all"
-                >
-                  <RiDownloadLine size={14} /> Export_PNG
-                </button>
-                <p className="text-[7px] font-mono opacity-20 tracking-tighter break-all">
-                  PATH: {window.location.origin}/product/{qrItem._id}
+                <h3 className="text-sm font-black uppercase tracking-[0.3em]">Confirm_Purge</h3>
+                <p className="text-[10px] font-mono opacity-40 leading-relaxed italic uppercase">
+                   Warning: Removing "{deleteConfirm.name}" will permanently erase all associated inventory logs. This action cannot be undone.
                 </p>
               </div>
+              <div className="grid grid-cols-2 gap-4">
+                <button 
+                  onClick={() => setDeleteConfirm(null)}
+                  className="py-4 border border-white/10 text-[9px] font-black uppercase hover:bg-white/5 transition-all"
+                >
+                  Abort_Cycle
+                </button>
+                <button 
+                  onClick={() => handleDelete(deleteConfirm._id)}
+                  className="py-4 bg-red-600 text-white text-[9px] font-black uppercase hover:bg-red-700 transition-all"
+                >
+                  Confirm_Removal
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* QR MODAL (UNCHANGED LOGIC, UPDATED STYLING) */}
+      <AnimatePresence>
+        {qrItem && (
+          <div className="fixed inset-0 z-[600] flex items-center justify-center p-6 bg-black/95 backdrop-blur-sm">
+            <motion.div 
+              initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }}
+              className="relative bg-[#0A0A0A] border border-white/10 p-12 max-w-sm w-full text-center space-y-8"
+            >
+              <button onClick={() => setQrItem(null)} className="absolute top-4 right-4 opacity-30 hover:opacity-100">
+                <RiCloseLine size={24} />
+              </button>
+              <p className="text-[9px] font-mono tracking-[0.5em] opacity-30 uppercase">Digital_Asset_Tag</p>
+              <div className="bg-white p-4 inline-block mx-auto">
+                <QRCodeSVG id="product-qr" value={`${window.location.origin}/product/${qrItem._id}`} size={200} level="H" />
+              </div>
+              <button onClick={downloadQR} className="w-full bg-white text-black py-4 text-[9px] font-black uppercase tracking-widest hover:bg-zinc-200 transition-all">
+                 Download_Identity_Map
+              </button>
             </motion.div>
           </div>
         )}
@@ -207,13 +229,18 @@ const Inventory = () => {
 
       <ProductPreviewPortal item={previewItem} onClose={() => setPreviewItem(null)} />
 
-      {/* TOAST SYSTEM */}
-      {toast && (
-        <div className="fixed bottom-10 right-10 flex items-center gap-4 bg-white text-black px-10 py-5 text-[9px] font-mono uppercase tracking-[0.4em] z-[300] border border-black/10">
-          <div className="size-2 bg-black animate-ping" />
-          {toast}
-        </div>
-      )}
+      {/* SYSTEM TOAST */}
+      <AnimatePresence>
+        {toast && (
+          <motion.div 
+            initial={{ opacity: 0, x: 50 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 50 }}
+            className="fixed bottom-10 right-10 flex items-center gap-6 bg-white text-black px-10 py-5 text-[9px] font-black uppercase tracking-[0.5em] z-[800] border-l-8 border-black"
+          >
+            <RiCheckboxCircleLine size={16} />
+            {toast}
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };
