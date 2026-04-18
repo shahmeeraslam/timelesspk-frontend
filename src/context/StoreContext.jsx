@@ -10,20 +10,33 @@ export const StoreProvider = ({ children }) => {
   const [orders, setOrders] = useState([]);
 
   const fetchOrders = async () => {
-  try {
-    // Ensure '/api' is included if it's not in your axios baseURL
-    const response = await API.get('/api/orders/list'); 
+    // Get the token from storage (standard practice for local development)
+    const token = localStorage.getItem('token');
     
-    const orderData = response.data?.success ? response.data.orders : response.data;
-    setOrders(Array.isArray(orderData) ? orderData : []);
-  } catch (error) {
-     console.error("Archive_Sync_Failure:", error);
-  }
-};
+    // If no token exists, don't even try the request
+    if (!token) return;
+
+    try {
+      const response = await API.get('/api/orders/list', {
+        headers: { token } // Ensure your backend middleware expects the 'token' key
+      }); 
+      
+      const orderData = response.data?.success ? response.data.orders : response.data;
+      setOrders(Array.isArray(orderData) ? orderData : []);
+    } catch (error) {
+      // Only log if it's NOT a 401, or handle it gracefully
+      if (error.response?.status !== 401) {
+        console.error("Archive_Sync_Failure:", error);
+      }
+    }
+  };
 
   useEffect(() => {
-    fetchOrders();
-  }, []);
+    const token = localStorage.getItem('token');
+    if (token) {
+      fetchOrders();
+    }
+  }, []); // Only runs on mount
 
   return (
     <StoreContext.Provider value={{ 
