@@ -8,35 +8,47 @@ export const StoreProvider = ({ children }) => {
   const [isDarkMode, setIsDarkMode] = useState(true);
   const [products, setProducts] = useState([]);
   const [orders, setOrders] = useState([]);
+  
+  // --- NEW: CMS STATE FOR GLOBAL COMPONENTS ---
+  const [cmsData, setCmsData] = useState(null);
+  const [loading, setLoading] = useState(true);
 
+  // Fetch orders logic
   const fetchOrders = async () => {
-    // Get the token from storage (standard practice for local development)
     const token = localStorage.getItem('token');
-    
-    // If no token exists, don't even try the request
     if (!token) return;
-
     try {
       const response = await API.get('/api/orders/list', {
-        headers: { token } // Ensure your backend middleware expects the 'token' key
+        headers: { token }
       }); 
-      
       const orderData = response.data?.success ? response.data.orders : response.data;
       setOrders(Array.isArray(orderData) ? orderData : []);
     } catch (error) {
-      // Only log if it's NOT a 401, or handle it gracefully
       if (error.response?.status !== 401) {
         console.error("Archive_Sync_Failure:", error);
       }
     }
   };
 
+  // --- NEW: FETCH CMS CONFIG (Ticker, Hero, etc.) ---
+  const fetchCMS = async () => {
+    try {
+      const response = await API.get('/api/admin/home-config');
+      setCmsData(response.data);
+    } catch (error) {
+      console.error("CMS_FETCH_FAILURE:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
     const token = localStorage.getItem('token');
+    fetchCMS(); // Always fetch public CMS data
     if (token) {
       fetchOrders();
     }
-  }, []); // Only runs on mount
+  }, []);
 
   return (
     <StoreContext.Provider value={{ 
@@ -44,7 +56,9 @@ export const StoreProvider = ({ children }) => {
       orders, setOrders, 
       fetchOrders,
       adminImg, setAdminImg, 
-      isDarkMode, setIsDarkMode 
+      isDarkMode, setIsDarkMode,
+      cmsData, setCmsData, // Exported for the Ticker and Home page
+      loading
     }}>
       <div className={isDarkMode ? 'theme-dark' : 'theme-light'}>
         {children}

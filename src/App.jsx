@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 
 import { Outlet, Route, Routes } from "react-router-dom";
 
@@ -44,16 +44,20 @@ import Customers from "./pages/adminpages/Customers";
 
 import Settings from "./pages/adminpages/Settings";
 
+import SystemTicker from "./components/SystemTicker.jsx"
 import { StoreProvider } from "./context/StoreContext";
 
 import { AnimatePresence } from "framer-motion";
+import HomeManifestEditor from "./pages/adminpages/HomeManifestEditor.jsx";
 const App = () => {
+  const isAdminPath = location.pathname.startsWith("/admin");
   return (
     <AnimatePresence mode="sync">
       <StoreProvider>
         <ShopProvider>
           <CartProvider>
-            <div className="bg-[var(--brand-alt)] min-h-screen">
+            <div className="bg-[var(--brand-alt)] min-h-screen"
+            > {!isAdminPath && <SystemTicker />}
               <Routes>
                 {/* 1. CUSTOMER ROUTES */}
                 <Route
@@ -86,6 +90,7 @@ const App = () => {
                   <Route path="orders" element={<AdminOrders/>} />
                   <Route path="customers" element={<Customers/>} />
                   <Route path="settings" element={<Settings/>} />
+                  <Route path="interface" element={<HomeManifestEditor/>} />
                 </Route>
               </Routes>
             </div>

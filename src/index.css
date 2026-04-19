@@ -43,3 +43,28 @@ a.active hr{
 body{
   overflow-x: hidden;
 }
+
+
+@keyframes mobile-slide {
+  0% {
+    opacity: 0;
+    transform: translateY(100%);
+  }
+  10% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  90% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-100%);
+  }
+}
+
+.animate-mobile-slide {
+  animation: mobile-slide 4s cubic-bezier(0.23, 1, 0.32, 1) infinite;
+}
+

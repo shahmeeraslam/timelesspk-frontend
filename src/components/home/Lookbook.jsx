@@ -1,120 +1,152 @@
 import React from "react";
+import { useNavigate } from "react-router-dom"; // Assumes you use react-router
 import { RiShoppingBagLine, RiFocus3Line, RiInformationLine } from "@remixicon/react";
 
-const Lookbook = ({ products, activeArchive, setActiveArchive, onAdd }) => {
+const Lookbook = ({ cmsData, products, activeArchive, setActiveArchive, onAdd }) => {
+  const navigate = useNavigate();
+
   if (!products || products.length === 0 || !activeArchive) return null;
 
-  // Helper to safely get image URL from your DB structure
+  const sectionTitle = cmsData?.lookbook?.title || "The Gallery";
+  const sectionTagline = cmsData?.lookbook?.tagline || "Archive_Resonance";
+
   const getImageUrl = (item) => {
     if (!item) return "";
-    if (item.img) return item.img;
-    if (Array.isArray(item.image)) {
-      // Handles both [ "url" ] and [ { url: "url" } ]
-      return typeof item.image[0] === 'string' ? item.image[0] : item.image[0]?.url;
-    }
-    return item.image;
+    return item.img || (Array.isArray(item.image) ? (typeof item.image[0] === 'string' ? item.image[0] : item.image[0]?.url) : item.image);
+  };
+
+  // Navigates to the product detail page
+  const handleNavigate = () => {
+    const pId = activeArchive._id?.toString() || activeArchive.id;
+    navigate(`/product/${pId}`);
   };
 
   return (
-    <section className="bg-[#050505] text-white py-24 md:py-40 relative overflow-hidden">
+    <section className="bg-[#050505] text-white py-24 md:py-32 lg:py-48 relative overflow-hidden">
       
-      {/* --- VOID DEPTH --- */}
-      <div className="absolute top-[-5%] left-[-5%] w-[60vw] h-[60vw] md:w-[40vw] md:h-[40vw] bg-[var(--brand-main)] opacity-[0.05] blur-[120px] rounded-full" />
+      {/* --- BACKGROUND ATMOSPHERICS --- */}
+      <div className="absolute inset-0 pointer-events-none overflow-hidden">
+        <div className="absolute top-[-10%] right-[-10%] w-[70vw] h-[70vw] bg-[var(--brand-main)] opacity-[0.04] blur-[150px] rounded-full" />
+        <div className="absolute bottom-[-5%] left-[-5%] w-[40vw] h-[40vw] bg-white opacity-[0.02] blur-[100px] rounded-full" />
+      </div>
 
-      <div className="px-6 md:px-20 grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-20 items-center">
+      <div className="px-6 md:px-12 lg:px-20 relative z-10 max-w-[1800px] mx-auto">
         
-        {/* --- INTERACTIVE INDEX --- */}
-        <div className="space-y-10 md:space-y-16 relative z-10 order-2 lg:order-1">
-          <div className="space-y-4 text-center lg:text-left">
-            <div className="flex items-center gap-3 justify-center lg:justify-start">
-                <div className="p-2 border border-white/10 rounded-full">
-                    <RiFocus3Line size={14} className="text-[var(--brand-main)] animate-spin-slow" />
-                </div>
-                <span className="text-[8px] md:text-[9px] font-mono tracking-[0.4em] md:tracking-[0.5em] uppercase font-bold text-white/40">Archive_Resonance</span>
-            </div>
-            <h2 className="text-[18vw] lg:text-[10vw] font-serif italic tracking-tighter leading-[0.8] text-white">
-                The <br className="hidden lg:block"/> <span className="text-transparent bg-clip-text bg-gradient-to-b from-white to-white/20">Gallery</span>
-            </h2>
+        {/* --- HEADER BLOCK --- */}
+        <div className="mb-16 md:mb-24 space-y-4">
+          <div className="flex items-center gap-3">
+            <RiFocus3Line size={14} className="text-[var(--brand-main)] animate-spin-slow" />
+            <span className="text-[9px] font-mono tracking-[0.5em] uppercase text-white/40">
+              {sectionTagline}
+            </span>
           </div>
-
-          {/* Scrollable list on mobile, static on desktop */}
-          <div className="flex flex-col gap-4 max-h-[40vh] overflow-y-auto lg:overflow-visible pr-2 scrollbar-hide">
-            {products.map((p) => {
-              const pId = p._id?.$oid || p._id || p.id;
-              const activeId = activeArchive._id?.$oid || activeArchive._id || activeArchive.id;
-              const isActive = pId === activeId;
-
-              return (
-                <button 
-                  key={pId}
-                  onMouseEnter={() => setActiveArchive(p)}
-                  onClick={() => setActiveArchive(p)} // Essential for touch devices
-                  className={`flex items-center gap-4 md:gap-8 w-full group transition-all duration-700 ease-[cubic-bezier(0.19,1,0.22,1)] 
-                    ${isActive ? 'translate-x-2 md:translate-x-6 opacity-100' : 'opacity-20 hover:opacity-50'}`}
-                >
-                  <div className={`h-[1px] md:h-[2px] transition-all duration-700 shadow-[0_0_15px_white] ${isActive ? 'w-10 md:w-20 bg-white' : 'w-0 bg-transparent'}`} />
-                  
-                  <div className="flex flex-col items-start text-left">
-                      <span className="font-mono text-[8px] md:text-[10px] font-bold tracking-[0.2em] text-[var(--brand-main)]">
-                        NODE_{String(pId).slice(-4).toUpperCase()}
-                      </span>
-                      <h3 className="text-2xl md:text-5xl lg:text-6xl font-serif italic uppercase tracking-tighter whitespace-nowrap">
-                        {p.name}
-                      </h3>
-                  </div>
-                </button>
-              );
-            })}
-          </div>
+          <h2 className="text-[10vw] lg:text-[6vw] font-serif italic tracking-tighter leading-[0.9] text-white max-w-[15ch]">
+            {sectionTitle}
+          </h2>
         </div>
 
-        {/* --- VISUALIZER: The Monolith --- */}
-        <div className="relative aspect-[4/5] order-1 lg:order-2 group overflow-hidden bg-black rounded-sm border border-white/5 shadow-2xl w-full max-w-md mx-auto lg:max-w-none">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-16 lg:gap-8 items-start">
           
-          <div className="absolute inset-0 z-20 pointer-events-none opacity-10" 
-               style={{ backgroundImage: `linear-gradient(to right, #ffffff10 1px, transparent 1px), linear-gradient(to bottom, #ffffff10 1px, transparent 1px)`, backgroundSize: '30px 30px' }} />
+          {/* --- LEFT: PRODUCT INDEX --- */}
+          <div className="lg:col-span-5 order-2 lg:order-1 h-full">
+            <div className="flex flex-row lg:flex-col gap-4 lg:gap-1 overflow-x-auto lg:overflow-visible pb-8 lg:pb-0 scrollbar-hide snap-x pr-4">
+              {products.map((p) => {
+                const pId = p._id?.toString() || p.id;
+                const activeId = activeArchive._id?.toString() || activeArchive.id;
+                const isActive = pId === activeId;
 
-          <img 
-            key={activeArchive._id?.$oid || activeArchive._id} 
-            src={getImageUrl(activeArchive)} 
-            className="w-full h-full object-cover transition-all duration-1000 animate-vivid-reveal" 
-            alt={activeArchive.name} 
-          />
-
-          {/* Specs Card and Add Button */}
-          <div className="absolute bottom-4 left-4 right-4 md:bottom-8 md:left-8 md:right-8 flex justify-between items-end z-30 gap-4">
-            <div className="relative overflow-hidden flex-grow bg-black/40 backdrop-blur-xl border border-white/10 p-4 md:p-8 transition-all duration-700 group-hover:bg-black/60">
-              <div className="flex items-center gap-2 mb-2 md:mb-4 opacity-40">
-                 <RiInformationLine size={10} />
-                 <p className="text-[7px] md:text-[8px] font-mono font-black uppercase tracking-[0.3em]">Unit_Specs</p>
-              </div>
-              
-              <h4 className="text-sm md:text-xl font-serif italic text-white mb-1 md:mb-3 truncate">
-                {activeArchive.category || "Authentic Piece"}
-              </h4>
-              <p className="text-xl md:text-3xl font-black tracking-tighter text-white">
-                <span className="text-[10px] md:text-sm align-top mr-0.5 font-mono opacity-50">$</span>
-                {activeArchive.price.toLocaleString()}
-              </p>
+                return (
+                  <button 
+                    key={pId}
+                    onMouseEnter={() => window.innerWidth > 1024 && setActiveArchive(p)} // Only hover on desktop
+                    onClick={() => setActiveArchive(p)}
+                    className={`flex items-center gap-4 lg:gap-6 min-w-[75vw] lg:min-w-0 snap-center transition-all duration-500 py-6 border-b border-white/5 lg:border-none group
+                      ${isActive ? 'opacity-100 lg:translate-x-4' : 'opacity-20 lg:hover:opacity-40 translate-x-0'}`}
+                  >
+                    <div className={`hidden lg:block h-[1px] transition-all duration-500 ${isActive ? 'w-12 bg-[var(--brand-main)]' : 'w-0 bg-white/20'}`} />
+                    
+                    <div className="flex flex-col items-start text-left overflow-hidden">
+                        <span className="font-mono text-[8px] tracking-[0.3em] text-[var(--brand-main)] mb-1 uppercase">
+                          ID_{String(pId).slice(-4)}
+                        </span>
+                        <h3 className="text-xl md:text-3xl lg:text-4xl font-serif italic uppercase tracking-tight truncate w-full transition-all">
+                          {p.name}
+                        </h3>
+                    </div>
+                  </button>
+                );
+              })}
             </div>
+          </div>
 
-            <button 
-              onClick={(e) => onAdd(e, activeArchive)} 
-              className="w-16 h-16 md:w-24 md:h-24 bg-white text-black flex items-center justify-center hover:scale-105 active:scale-90 transition-all duration-500 shadow-xl group/btn shrink-0"
+          {/* --- RIGHT: THE MONOLITH --- */}
+          <div className="lg:col-span-7 order-1 lg:order-2 lg:pl-12">
+            <div 
+              onClick={handleNavigate}
+              className="relative aspect-[10/12] lg:aspect-[4/5] group overflow-hidden bg-[#080808] rounded-sm border border-white/10 shadow-[0_40px_100px_rgba(0,0,0,0.7)] cursor-pointer"
             >
-              <RiShoppingBagLine size={24} className="md:size-8 relative z-10" />
-            </button>
+              
+              {/* Technical Overlay */}
+              <div className="absolute inset-0 z-20 pointer-events-none opacity-[0.15]" 
+                   style={{ backgroundImage: `linear-gradient(#ffffff10 1px, transparent 1px), linear-gradient(90deg, #ffffff10 1px, transparent 1px)`, backgroundSize: '40px 40px' }} />
+
+              <img 
+                key={activeArchive._id?.toString()} 
+                src={getImageUrl(activeArchive)} 
+                className="w-full h-full object-cover transition-all duration-1000 scale-100 lg:group-hover:scale-105 animate-vivid-reveal" 
+                alt={activeArchive.name} 
+              />
+
+              {/* PRODUCT HUD - Dynamic Visibility */}
+              <div className="absolute bottom-6 left-6 right-6 md:bottom-10 md:left-10 md:right-10 z-30">
+                <div className={`flex items-stretch gap-px bg-white/5 backdrop-blur-2xl border border-white/10 rounded-sm overflow-hidden transition-all duration-700 
+                  /* Mobile: Always Visible | Desktop: Hidden until hover */
+                  translate-y-0 opacity-100 lg:translate-y-4 lg:opacity-0 lg:group-hover:translate-y-0 lg:group-hover:opacity-100`}>
+                  
+                  {/* Info Section */}
+                  <div className="flex-grow p-6 flex flex-col justify-center bg-black/40">
+                    <div className="flex justify-between items-center mb-3">
+                        <div className="flex items-center gap-2 opacity-50">
+                          <RiInformationLine size={12} />
+                          <span className="text-[8px] font-mono uppercase tracking-[0.2em]">Data_Output</span>
+                        </div>
+                        <span className="text-[10px] font-mono text-[var(--brand-main)]">00{products.indexOf(activeArchive) + 1}</span>
+                    </div>
+                    
+                    <div>
+                        <h4 className="text-xs font-mono text-white/60 uppercase mb-1">{activeArchive.category || "General_Release"}</h4>
+                        <p className="text-2xl font-black tracking-tighter text-white">
+                          <span className="text-xs mr-1 opacity-40 font-mono">$</span>
+                          {activeArchive.price?.toLocaleString()}
+                        </p>
+                    </div>
+                  </div>
+
+                  {/* Add to Cart Button */}
+                  <button 
+                    onClick={(e) => {
+                      e.stopPropagation(); // Prevents navigating to product page when adding to cart
+                      onAdd(e, activeArchive);
+                    }} 
+                    className="w-20 md:w-28 bg-[var(--brand-main)] text-black flex flex-col items-center justify-center lg:hover:bg-white transition-all duration-500"
+                  >
+                    <RiShoppingBagLine size={24} />
+                    <span className="text-[7px] font-black uppercase tracking-widest mt-2">Acquire</span>
+                  </button>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
 
       <style>{`
         @keyframes vivid-reveal {
-          from { opacity: 0; filter: brightness(0.5) contrast(1.2); transform: scale(1.05); }
-          to { opacity: 1; filter: brightness(1) contrast(1); transform: scale(1); }
+          from { opacity: 0; filter: brightness(0.2) blur(10px); transform: scale(1.1); }
+          to { opacity: 1; filter: brightness(1) blur(0); transform: scale(1); }
         }
         .animate-vivid-reveal { animation: vivid-reveal 1.2s cubic-bezier(0.19, 1, 0.22, 1) forwards; }
-        .animate-spin-slow { animation: spin 8s linear infinite; }
+        .animate-spin-slow { animation: spin 15s linear infinite; }
         @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
         .scrollbar-hide::-webkit-scrollbar { display: none; }
         .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
