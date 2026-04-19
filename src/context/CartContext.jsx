@@ -13,29 +13,25 @@ export const CartProvider = ({ children }) => {
     }
   });
 
-  // --- 1. FETCH CART FROM NEW COLLECTION ---
-// --- 1. FETCH CART FROM NEW COLLECTION ---
+  // --- 1. FETCH CART ---
   const fetchCart = useCallback(async () => {
     try {
-      // The interceptor handles the token automatically
       const res = await API.get("/api/cart");
       setCart(res.data || []);
     } catch (err) {
       console.error("Error fetching cart:", err.message);
-      // If the token is invalid or expired, the interceptor could handle the logout
     }
   }, []);
 
-  // --- 2. DATABASE SYNC FUNCTION ---
+  // --- 2. DATABASE SYNC ---
   const syncCartWithDB = async (updatedCart) => {
     try {
-      // API instance handles the production URL vs localhost switch
       await API.put("/api/cart/sync", { items: updatedCart });
     } catch (err) {
       console.error("Cloud Sync Error:", err.response?.data?.message || err.message);
     }
   };
-  // Load cart when user logs in or app starts
+
   useEffect(() => {
     if (user) {
       fetchCart();
@@ -44,7 +40,6 @@ export const CartProvider = ({ children }) => {
     }
   }, [user, fetchCart]);
 
-  // Sync auth state across tabs
   useEffect(() => {
     const syncAuthState = () => {
       const savedUser = localStorage.getItem('user');
@@ -71,7 +66,7 @@ export const CartProvider = ({ children }) => {
     window.location.href = '/login'; 
   };
 
-  // --- 3. ACTIONS ---
+  // --- 3. UPDATED ACTIONS (COLOR & SIZE SENSITIVE) ---
 
   const addToCart = (product) => {
     if (!user) {
@@ -80,23 +75,25 @@ export const CartProvider = ({ children }) => {
     }
 
     setCart((prevCart) => {
-      const existingItem = prevCart.find(
-        (item) => {
-          const pId = item.productId?._id || item.productId;
-          return pId === product._id && item.size === product.size;
-        }
-      );
+      const existingItem = prevCart.find((item) => {
+        const pId = item.productId?._id || item.productId;
+        // Unique combination: ID + SIZE + COLOR
+        return (
+          pId === product._id && 
+          item.size === product.size && 
+          item.color === product.color
+        );
+      });
 
       let newCart;
       if (existingItem) {
         newCart = prevCart.map((item) => {
           const pId = item.productId?._id || item.productId;
-          return (pId === product._id && item.size === product.size)
+          return (pId === product._id && item.size === product.size && item.color === product.color)
             ? { ...item, quantity: item.quantity + 1 }
             : item;
         });
       } else {
-        // Keep the full product object locally for immediate UI update
         newCart = [...prevCart, { ...product, productId: product._id, quantity: 1 }];
       }
       
@@ -105,22 +102,23 @@ export const CartProvider = ({ children }) => {
     });
   };
 
-  const removeFromCart = (productId, size) => {
+  const removeFromCart = (productId, size, color) => {
     setCart((prevCart) => {
       const newCart = prevCart.filter((item) => {
         const pId = item.productId?._id || item.productId;
-        return !(pId === productId && item.size === size);
+        // Keep everything EXCEPT the specific ID + Size + Color combo
+        return !(pId === productId && item.size === size && item.color === color);
       });
       syncCartWithDB(newCart);
       return newCart;
     });
   };
 
-  const updateQuantity = (productId, size, delta) => {
+  const updateQuantity = (productId, size, color, delta) => {
     setCart((prevCart) => {
       const newCart = prevCart.map((item) => {
         const pId = item.productId?._id || item.productId;
-        if (pId === productId && item.size === size) {
+        if (pId === productId && item.size === size && item.color === color) {
           return { ...item, quantity: Math.max(1, item.quantity + delta) };
         }
         return item;
@@ -130,28 +128,54 @@ export const CartProvider = ({ children }) => {
     });
   };
 
-  const changeSize = (productId, oldSize, newSize) => {
+  const changeSize = (productId, color, oldSize, newSize) => {
     setCart((prevCart) => {
-      const newCart = prevCart.map((item) => {
+      // Check if the NEW size in the SAME color already exists in cart
+      const existingInNewSize = prevCart.find((item) => {
         const pId = item.productId?._id || item.productId;
-        return (pId === productId && item.size === oldSize)
-          ? { ...item, size: newSize }
-          : item;
+        return pId === productId && item.color === color && item.size === newSize;
       });
+
+      let newCart;
+      if (existingInNewSize) {
+        // If it exists, merge them: increase quantity of new size, remove old size
+        newCart = prevCart
+          .map((item) => {
+            const pId = item.productId?._id || item.productId;
+            if (pId === productId && item.color === color && item.size === newSize) {
+              const oldItem = prevCart.find(i => (i.productId?._id || i.productId) === productId && i.color === color && i.size === oldSize);
+              return { ...item, quantity: item.quantity + (oldItem?.quantity || 1) };
+            }
+            return item;
+          })
+          .filter((item) => {
+            const pId = item.productId?._id || item.productId;
+            return !(pId === productId && item.color === color && item.size === oldSize);
+          });
+      } else {
+        // Standard size change
+        newCart = prevCart.map((item) => {
+          const pId = item.productId?._id || item.productId;
+          return (pId === productId && item.color === color && item.size === oldSize)
+            ? { ...item, size: newSize }
+            : item;
+        });
+      }
+      
       syncCartWithDB(newCart);
       return newCart;
     });
   };
 
-  // Helper to get price safely whether populated or not
+  // Correct total logic considering discounts (salePrice)
   const cartTotal = cart.reduce((acc, item) => {
-    const price = item.productId?.price || item.price || 0;
+    const price = item.productId?.salePrice || item.salePrice || item.productId?.price || item.price || 0;
     return acc + (price * item.quantity);
   }, 0);
 
   return (
     <CartContext.Provider value={{ 
-      cart, setCart,  addToCart, removeFromCart, changeSize,
+      cart, setCart, addToCart, removeFromCart, changeSize,
       updateQuantity, cartTotal, setUser, user, handleLogout 
     }}>
       {children}
