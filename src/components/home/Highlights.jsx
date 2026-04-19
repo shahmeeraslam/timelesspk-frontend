@@ -20,11 +20,11 @@ const Highlights = ({ items, cmsData }) => {
         <div className="space-y-4">
           <div className="flex items-center gap-3 justify-center md:justify-start">
             <RiFlashlightLine size={16} className="text-[var(--brand-main)] animate-pulse" />
-            <h2 className="text-[9px] md:text-[10px] font-mono uppercase tracking-[0.4em] md:tracking-[0.6em] text-[var(--brand-main)] font-bold">
+            <h2 className="text-[10px] md:text-[10px] font-mono uppercase tracking-[0.4em] md:tracking-[0.6em] text-[var(--brand-main)] font-bold">
               {tagline}
             </h2>
           </div>
-          <h3 className="text-4xl md:text-6xl font-serif italic tracking-tighter uppercase leading-[0.9] text-center md:text-left">
+          <h3 className="text-2xl md:text-6xl font-serif italic tracking-tighter uppercase leading-[0.9] text-center md:text-left">
             {sectionTitle} <br /> 
             <span className="not-italic font-light opacity-40">{sectionSubtitle}</span>
           </h3>
@@ -79,8 +79,7 @@ const Highlights = ({ items, cmsData }) => {
                       ID_CORE: {String(item._id || "000000").slice(-6)}
                     </p>
                     <h3 
-                      className="font-serif italic uppercase leading-[0.85] tracking-tighter text-[var(--brand-main)]"
-                      style={{ fontSize: "clamp(1.5rem, 6vw, 2.5rem)" }}
+                      className="font-serif italic uppercase text-xl md:text-4xl  leading-[0.85] tracking-tighter text-[var(--brand-main)]"
                     >
                       {item.name}
                     </h3>

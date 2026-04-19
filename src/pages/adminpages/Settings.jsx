@@ -7,6 +7,7 @@ import {
   RiUserLine, RiLockPasswordLine, RiTerminalBoxLine,
   RiCameraLine, RiLoader5Line, RiVerifiedBadgeLine
 } from '@remixicon/react';
+import toast from 'react-hot-toast';
 
 const Settings = () => {
   // Pull Global State (Assuming user data is synced here or in a similar context)
@@ -64,7 +65,7 @@ const Settings = () => {
       const updatedUser = { ...adminData, name: data.name };
       localStorage.setItem("user", JSON.stringify(updatedUser));
       setAdminData(updatedUser);
-      alert("Identity Updated Successfully");
+      toast.success("Identity Updated Successfully");
     } catch (err) {
       console.error("Update failed", err);
     }

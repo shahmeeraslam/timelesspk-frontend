@@ -6,9 +6,9 @@ import {
   RiExpandDiagonalLine, 
   RiShoppingBagLine, 
   RiPercentLine, 
-  RiShieldCheckLine, 
   RiArrowRightUpLine,
-  RiDeleteBin7Line
+  RiDeleteBin7Line,
+  RiAlertLine
 } from "@remixicon/react";
 
 const Cart = () => {
@@ -23,7 +23,6 @@ const Cart = () => {
     return ["S", "M", "L", "XL"];
   };
 
-  // --- CALCULATE TOTALS WITH SALE PRICE LOGIC ---
   const { grossSubtotal, totalSavings, netTotal } = useMemo(() => {
     return cart.reduce((acc, item) => {
       const pData = item.productId && typeof item.productId === 'object' ? item.productId : item;
@@ -43,10 +42,8 @@ const Cart = () => {
   return (
     <div className="min-h-screen pt-24 md:pt-32 pb-20 px-4 md:px-12 relative bg-[#050505] text-white selection:bg-white selection:text-black overflow-x-hidden">
       
-      {/* Decorative Background Element */}
       <div className="fixed -top-[10%] -right-[10%] w-[50%] h-[50%] bg-white/[0.02] blur-[120px] rounded-full pointer-events-none" />
 
-      {/* --- FULLSCREEN PREVIEW --- */}
       {fullscreenImg && (
         <div className="fixed inset-0 z-[100] bg-black/98 flex items-center justify-center p-4 backdrop-blur-3xl transition-all duration-500" onClick={() => setFullscreenImg(null)}>
           <button className="absolute top-12 right-12 text-white/40 hover:text-white transition-all hover:rotate-90">
@@ -90,7 +87,6 @@ const Cart = () => {
         ) : (
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-16">
             
-            {/* --- ITEM LIST --- */}
             <div className="lg:col-span-8 space-y-16">
               {cart.map((item) => {
                 const pData = item.productId && typeof item.productId === 'object' ? item.productId : item;
@@ -99,12 +95,14 @@ const Cart = () => {
                 const discountPercent = pData.discount || 0;
                 const originalPrice = pData.price || 0;
                 const activePrice = originalPrice - (originalPrice * discountPercent / 100);
+                
+                // STOCK CHECKING LOGIC
+                const maxStock = pData.stock || 0;
+                const isAtLimit = item.quantity >= maxStock;
 
                 return (
-                  // UNIQUE KEY: ID + SIZE + COLOR
                   <div key={`${pId}-${item.size}-${item.color}`} className="flex flex-col sm:flex-row gap-10 pb-16 border-b border-white/5 group">
                     
-                    {/* Visual Interface */}
                     <div className="w-full sm:w-52 h-72 sm:h-64 shrink-0 bg-[#080808] border border-white/5 relative overflow-hidden group/img">
                       <img 
                         src={displayImg} 
@@ -119,7 +117,6 @@ const Cart = () => {
                       </button>
                     </div>
 
-                    {/* Data Interface */}
                     <div className="flex flex-col justify-between w-full py-1">
                       <div className="space-y-8">
                         <div className="flex justify-between items-start">
@@ -133,11 +130,11 @@ const Cart = () => {
                                 FINISH: {item.color || "DEFAULT"}
                               </span>
                               <span className="text-[7px] font-mono uppercase tracking-[0.4em] text-white/30 px-3 py-1 border border-white/5 bg-white/[0.02]">
-                                REF: {pId.slice(-6)}
+                                REF: {pId.toString().slice(-6)}
                               </span>
-                              {discountPercent > 0 && (
-                                <div className="flex items-center gap-2 text-red-500 font-mono text-[7px] uppercase tracking-[0.4em] bg-red-500/5 px-2 py-1 border border-red-500/20">
-                                  <RiPercentLine size={10}/> -{discountPercent}%
+                              {isAtLimit && (
+                                <div className="flex items-center gap-2 text-orange-500 font-mono text-[7px] uppercase tracking-[0.4em] bg-orange-500/5 px-2 py-1 border border-orange-500/20 animate-pulse">
+                                  <RiAlertLine size={10}/> Stock_Limit
                                 </div>
                               )}
                             </div>
@@ -171,10 +168,30 @@ const Cart = () => {
                       </div>
 
                       <div className="flex justify-between items-end mt-12">
-                        <div className="flex items-center border border-white/5 bg-white/[0.01]">
-                          <button onClick={() => updateQuantity(pId, item.size, item.color, -1)} className="w-14 h-12 flex items-center justify-center text-sm hover:bg-white/5 transition-colors border-r border-white/5">-</button>
-                          <span className="w-14 h-12 flex items-center justify-center text-[10px] font-mono tracking-widest">{item.quantity}</span>
-                          <button onClick={() => updateQuantity(pId, item.size, item.color, 1)} className="w-14 h-12 flex items-center justify-center text-sm hover:bg-white/5 transition-colors border-l border-white/5">+</button>
+                        <div className="flex flex-col gap-2">
+                          <div className="flex items-center border border-white/5 bg-white/[0.01]">
+                            <button 
+                              onClick={() => updateQuantity(pId, item.size, item.color, -1)} 
+                              className="w-14 h-12 flex items-center justify-center text-sm hover:bg-white/5 transition-colors border-r border-white/5"
+                            >
+                              -
+                            </button>
+                            <span className="w-14 h-12 flex items-center justify-center text-[10px] font-mono tracking-widest">
+                              {item.quantity}
+                            </span>
+                            <button 
+                              disabled={isAtLimit}
+                              onClick={() => updateQuantity(pId, item.size, item.color, 1)} 
+                              className={`w-14 h-12 flex items-center justify-center text-sm transition-colors border-l border-white/5 ${isAtLimit ? 'opacity-10 cursor-not-allowed' : 'hover:bg-white/5'}`}
+                            >
+                              +
+                            </button>
+                          </div>
+                          {isAtLimit && (
+                            <p className="text-[6px] font-mono uppercase tracking-widest text-orange-500/60">
+                              Archive_Capacity_Reached
+                            </p>
+                          )}
                         </div>
                         <div className="text-right">
                             {discountPercent > 0 && (
@@ -193,7 +210,6 @@ const Cart = () => {
               })}
             </div>
 
-            {/* --- SUMMARY STICKY --- */}
             <div className="lg:col-span-4">
                 <div className="p-10 sticky top-32 bg-white/[0.02] border border-white/10 backdrop-blur-3xl space-y-12">
                     <div className="flex items-center gap-4">

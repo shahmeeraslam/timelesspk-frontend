@@ -5,6 +5,7 @@ import {
   RiLoader5Line, 
   RiBroadcastLine 
 } from "@remixicon/react";
+import toast from "react-hot-toast";
 
 const VisualHUD = ({ config, setConfig }) => {
   const [isUploading, setIsUploading] = useState(false);
@@ -32,7 +33,7 @@ const VisualHUD = ({ config, setConfig }) => {
       });
     } catch (err) {
       console.error("ASSET_UPLOAD_FAILED", err);
-      alert("UPLOAD_ERROR: Check console for logs.");
+      toast.error("UPLOAD_ERROR: Check console for logs.");
     } finally {
       setIsUploading(false);
     }

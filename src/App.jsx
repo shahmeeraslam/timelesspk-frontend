@@ -49,6 +49,7 @@ import { StoreProvider } from "./context/StoreContext";
 
 import { AnimatePresence } from "framer-motion";
 import HomeManifestEditor from "./pages/adminpages/HomeManifestEditor.jsx";
+import { Toaster } from "react-hot-toast";
 const App = () => {
   const isAdminPath = location.pathname.startsWith("/admin");
   return (
@@ -57,7 +58,25 @@ const App = () => {
         <ShopProvider>
           <CartProvider>
             <div className="bg-[var(--brand-alt)] min-h-screen"
-            > {!isAdminPath && <SystemTicker />}
+            
+            >
+               {!isAdminPath && <SystemTicker />}
+               <Toaster 
+        position="bottom-right"
+        toastOptions={{
+          style: {
+            background: '#0a0a0a',
+            color: '#fff',
+            border: '1px solid rgba(255,255,255,0.1)',
+            borderRadius: '0px',
+            fontFamily: 'monospace',
+            fontSize: '10px',
+            letterSpacing: '0.2em',
+            textTransform: 'uppercase',
+          },
+        }}
+      />
+  
               <Routes>
                 {/* 1. CUSTOMER ROUTES */}
                 <Route

@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import API from "../../api"
+import toast from 'react-hot-toast';
 const CartContext = createContext();
 
 export const CartProvider = ({ children }) => {
@@ -13,7 +14,6 @@ export const CartProvider = ({ children }) => {
     }
   });
 
-  // --- 1. FETCH CART ---
   const fetchCart = useCallback(async () => {
     try {
       const res = await API.get("/api/cart");
@@ -23,7 +23,6 @@ export const CartProvider = ({ children }) => {
     }
   }, []);
 
-  // --- 2. DATABASE SYNC ---
   const syncCartWithDB = async (updatedCart) => {
     try {
       await API.put("/api/cart/sync", { items: updatedCart });
@@ -63,27 +62,36 @@ export const CartProvider = ({ children }) => {
     localStorage.removeItem('userInfo');
     setUser(null);
     setCart([]); 
+    toast.success("SESSION_TERMINATED: ARCHIVE_LOCKED");
     window.location.href = '/login'; 
   };
 
-  // --- 3. UPDATED ACTIONS (COLOR & SIZE SENSITIVE) ---
-
   const addToCart = (product) => {
     if (!user) {
-      alert("Please Sign In to access the Archive.");
+      toast.error("Please Sign In to access the Archive.");
       return;
     }
 
     setCart((prevCart) => {
       const existingItem = prevCart.find((item) => {
         const pId = item.productId?._id || item.productId;
-        // Unique combination: ID + SIZE + COLOR
         return (
           pId === product._id && 
           item.size === product.size && 
           item.color === product.color
         );
       });
+
+      const currentQty = existingItem ? existingItem.quantity : 0;
+      const stockAvailable = product.stock ?? 0; 
+      
+      if (currentQty + 1 > stockAvailable) {
+       toast.error(`INVENTORY_CONFLICT: LIMIT_${stockAvailable}_REACHED`, {
+    icon: '⚠️',
+    duration: 3000,
+  });
+  return prevCart;
+}
 
       let newCart;
       if (existingItem) {
@@ -106,7 +114,6 @@ export const CartProvider = ({ children }) => {
     setCart((prevCart) => {
       const newCart = prevCart.filter((item) => {
         const pId = item.productId?._id || item.productId;
-        // Keep everything EXCEPT the specific ID + Size + Color combo
         return !(pId === productId && item.size === size && item.color === color);
       });
       syncCartWithDB(newCart);
@@ -116,21 +123,39 @@ export const CartProvider = ({ children }) => {
 
   const updateQuantity = (productId, size, color, delta) => {
     setCart((prevCart) => {
-      const newCart = prevCart.map((item) => {
+      const itemToUpdate = prevCart.find((item) => {
         const pId = item.productId?._id || item.productId;
-        if (pId === productId && item.size === size && item.color === color) {
-          return { ...item, quantity: Math.max(1, item.quantity + delta) };
-        }
-        return item;
+        return pId === productId && item.size === size && item.color === color;
       });
-      syncCartWithDB(newCart);
-      return newCart;
+
+      if (itemToUpdate) {
+        const newQty = itemToUpdate.quantity + delta;
+        const stockLimit = itemToUpdate.productId?.countInStock || itemToUpdate.countInStock || 99;
+
+        if (newQty > stockLimit) {
+          toast.error(`Inventory_Limit: Cannot exceed ${stockLimit} units.`);
+          return prevCart;
+        }
+
+        if (newQty < 1) return prevCart;
+
+        const newCart = prevCart.map((item) => {
+          const pId = item.productId?._id || item.productId;
+          if (pId === productId && item.size === size && item.color === color) {
+            return { ...item, quantity: newQty };
+          }
+          return item;
+        });
+
+        syncCartWithDB(newCart);
+        return newCart;
+      }
+      return prevCart;
     });
   };
 
   const changeSize = (productId, color, oldSize, newSize) => {
     setCart((prevCart) => {
-      // Check if the NEW size in the SAME color already exists in cart
       const existingInNewSize = prevCart.find((item) => {
         const pId = item.productId?._id || item.productId;
         return pId === productId && item.color === color && item.size === newSize;
@@ -138,7 +163,6 @@ export const CartProvider = ({ children }) => {
 
       let newCart;
       if (existingInNewSize) {
-        // If it exists, merge them: increase quantity of new size, remove old size
         newCart = prevCart
           .map((item) => {
             const pId = item.productId?._id || item.productId;
@@ -153,7 +177,6 @@ export const CartProvider = ({ children }) => {
             return !(pId === productId && item.color === color && item.size === oldSize);
           });
       } else {
-        // Standard size change
         newCart = prevCart.map((item) => {
           const pId = item.productId?._id || item.productId;
           return (pId === productId && item.color === color && item.size === oldSize)
@@ -167,7 +190,6 @@ export const CartProvider = ({ children }) => {
     });
   };
 
-  // Correct total logic considering discounts (salePrice)
   const cartTotal = cart.reduce((acc, item) => {
     const price = item.productId?.salePrice || item.salePrice || item.productId?.price || item.price || 0;
     return acc + (price * item.quantity);

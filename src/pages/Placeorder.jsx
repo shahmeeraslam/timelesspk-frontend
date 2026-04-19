@@ -4,31 +4,27 @@ import { useNavigate } from "react-router-dom";
 import PageTransition from "../components/PageTransition";
 import { 
   RiLoader4Line, 
-  RiPhoneFill, 
-  RiWallet3Line, 
   RiArchiveLine, 
   RiShieldCheckLine,
-  RiDiscountPercentLine,
   RiUserLine,
   RiDraftLine
 } from "@remixicon/react";
 import API from "../../api";
+import toast from "react-hot-toast";
 
 const PlaceOrder = () => {
-  const { cart, setCart, user } = useCart(); // Assuming user is available in context
+  const { cart, setCart, user } = useCart();
   const navigate = useNavigate();
   const [isProcessing, setIsProcessing] = useState(false);
   const [useProfileAddress, setUseProfileAddress] = useState(true);
   
   const method = "cod";
 
-  // Initial form state
   const [formData, setFormData] = useState({
     firstName: "", lastName: "", email: "", street: "",
     city: "", state: "", zipcode: "", country: "Pakistan", phone: ""
   });
 
-  // --- LOGIC: SYNC PROFILE DATA ---
   useEffect(() => {
     if (useProfileAddress && user) {
       const nameParts = user.name ? user.name.split(" ") : ["", ""];
@@ -57,9 +53,8 @@ const PlaceOrder = () => {
       
       acc.subtotal += originalItemTotal;
       acc.total += discountedItemTotal;
-      acc.savings += (originalItemTotal - discountedItemTotal);
       return acc;
-    }, { subtotal: 0, total: 0, savings: 0 });
+    }, { subtotal: 0, total: 0 });
   }, [cart]);
 
   const PAKISTAN_STATES = ["Punjab", "Sindh", "KPK", "Balochistan", "Gilgit-Baltistan", "Azad Kashmir", "Islamabad Capital Territory"];
@@ -72,22 +67,33 @@ const PlaceOrder = () => {
 
   const handlePlaceOrder = async (e) => {
     e.preventDefault();
+    if (cart.length === 0) return toast.error("MANIFEST_EMPTY");
+
     setIsProcessing(true);
     try {
       const orderData = {
         address: formData,
-        items: cart, // Now contains color from previous updates
+        items: cart.map(item => ({
+          productId: item.productId?._id || item.productId,
+          name: item.name,
+          quantity: item.quantity,
+          size: item.size,
+          color: item.color,
+          price: item.price,
+          image: item.image
+        })),
         amount: Math.round(totals.total), 
         paymentMethod: method
       };
 
       const response = await API.post("/api/orders/place", orderData);
       if (response.data.success) {
+        toast.success("MANIFEST_LOGGED: ARCHIVE_UPDATED");
         if (setCart) setCart([]); 
         navigate("/orders");
       }
     } catch (err) {
-      alert("TERMINAL_FAILURE: Could not initiate order sequence.");
+      toast.error(err.response?.data?.message || "TERMINAL_FAILURE");
     } finally {
       setIsProcessing(false);
     }
@@ -95,40 +101,38 @@ const PlaceOrder = () => {
 
   return (
     <PageTransition>
-      <div className="min-h-screen pt-32 pb-20 px-6 md:px-12 bg-[var(--brand-alt)] text-[var(--brand-main)]">
-        
+      <div className="min-h-screen pt-32 pb-20 px-6 md:px-12 bg-black text-white">
         <form onSubmit={handlePlaceOrder} className="relative z-10 max-w-[1400px] mx-auto flex flex-col lg:flex-row gap-24">
           
-          <div className="w-full lg:w-[60%] space-y-16 border-l border-[var(--brand-border)] pl-8 md:pl-16">
+          <div className="w-full lg:w-[60%] space-y-16 border-l border-white/10 pl-8 md:pl-16">
             <header className="space-y-6">
               <div className="flex items-center gap-4">
-                <RiShieldCheckLine size={14} className="text-[var(--brand-accent)]" />
-                <span className="text-[9px] font-mono tracking-[0.5em] uppercase text-[var(--brand-muted)]">Secure_Node_Active</span>
+                <RiShieldCheckLine size={14} className="text-emerald-500" />
+                <span className="text-[9px] font-mono tracking-[0.5em] uppercase text-white/30">Secure_Node_Active</span>
               </div>
               <h1 className="text-6xl md:text-8xl font-serif italic tracking-tighter">Final_Step.</h1>
             </header>
 
-            {/* IDENTITY TOGGLE */}
-            <div className="flex gap-4 p-1 border border-[var(--brand-border)] w-fit bg-[var(--brand-soft-bg)]">
+            <div className="flex gap-4 p-1 border border-white/10 w-fit bg-white/[0.02]">
                 <button 
                   type="button"
                   onClick={() => setUseProfileAddress(true)}
-                  className={`flex items-center gap-3 px-6 py-3 text-[9px] font-mono tracking-widest transition-all ${useProfileAddress ? 'bg-[var(--brand-main)] text-[var(--brand-alt)]' : 'text-[var(--brand-muted)] hover:text-[var(--brand-main)]'}`}
+                  className={`flex items-center gap-3 px-6 py-3 text-[9px] font-mono tracking-widest transition-all ${useProfileAddress ? 'bg-white text-black font-black' : 'text-white/30 hover:text-white'}`}
                 >
                   <RiUserLine size={12} /> PROFILE_IDENTITY
                 </button>
                 <button 
                    type="button"
                    onClick={() => setUseProfileAddress(false)}
-                   className={`flex items-center gap-3 px-6 py-3 text-[9px] font-mono tracking-widest transition-all ${!useProfileAddress ? 'bg-[var(--brand-main)] text-[var(--brand-alt)]' : 'text-[var(--brand-muted)] hover:text-[var(--brand-main)]'}`}
+                   className={`flex items-center gap-3 px-6 py-3 text-[9px] font-mono tracking-widest transition-all ${!useProfileAddress ? 'bg-white text-black font-black' : 'text-white/30 hover:text-white'}`}
                 >
                   <RiDraftLine size={12} /> CUSTOM_MANIFEST
                 </button>
             </div>
 
             <section className="space-y-12">
-              <h2 className="text-[10px] text-[var(--brand-muted)] uppercase tracking-[0.6em] flex items-center gap-4 font-black">
-                01 — Logistics <div className="h-[1px] flex-grow bg-[var(--brand-border)]" />
+              <h2 className="text-[10px] text-white/30 uppercase tracking-[0.6em] flex items-center gap-4 font-black">
+                01 — Logistics <div className="h-[1px] flex-grow bg-white/10" />
               </h2>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-10">
                 {[
@@ -138,23 +142,23 @@ const PlaceOrder = () => {
                   { name: "street", placeholder: "Full_Street_Address", full: true },
                 ].map((field) => (
                   <div key={field.name} className={`flex flex-col gap-3 group ${field.full ? "md:col-span-2" : ""}`}>
-                    <label className="text-[8px] font-mono uppercase tracking-[0.3em] text-[var(--brand-muted)]">{field.placeholder}</label>
+                    <label className="text-[8px] font-mono uppercase tracking-[0.3em] text-white/30">{field.placeholder}</label>
                     <input
                       required
                       name={field.name}
                       readOnly={useProfileAddress}
                       value={formData[field.name]}
                       onChange={onInputChange}
-                      className={`bg-transparent border-b border-[var(--brand-border)] py-4 outline-none text-sm font-light focus:border-[var(--brand-accent)] transition-all uppercase tracking-widest ${useProfileAddress ? 'opacity-50 cursor-not-allowed' : ''}`}
+                      className={`bg-transparent border-b border-white/10 py-4 outline-none text-sm font-light focus:border-white transition-all uppercase tracking-widest ${useProfileAddress ? 'opacity-30 cursor-not-allowed border-dashed' : ''}`}
                     />
                   </div>
                 ))}
 
                 <div className="flex flex-col gap-3">
-                  <label className="text-[8px] font-mono uppercase tracking-[0.3em] text-[var(--brand-muted)]">City_Node</label>
+                  <label className="text-[8px] font-mono uppercase tracking-[0.3em] text-white/30">City_Node</label>
                   <select 
                     name="city" required value={formData.city} onChange={onInputChange} disabled={useProfileAddress}
-                    className="bg-[var(--brand-alt)] border-b border-[var(--brand-border)] py-4 outline-none text-sm font-light uppercase tracking-widest disabled:opacity-50"
+                    className="bg-black border-b border-white/10 py-4 outline-none text-sm font-light uppercase tracking-widest disabled:opacity-30"
                   >
                     <option value="" disabled>Select_City</option>
                     {MAJOR_CITIES.map(city => <option key={city} value={city}>{city}</option>)}
@@ -162,10 +166,10 @@ const PlaceOrder = () => {
                 </div>
 
                 <div className="flex flex-col gap-3">
-                  <label className="text-[8px] font-mono uppercase tracking-[0.3em] text-[var(--brand-muted)]">State_Region</label>
+                  <label className="text-[8px] font-mono uppercase tracking-[0.3em] text-white/30">State_Region</label>
                   <select 
                     name="state" required value={formData.state} onChange={onInputChange} disabled={useProfileAddress}
-                    className="bg-[var(--brand-alt)] border-b border-[var(--brand-border)] py-4 outline-none text-sm font-light uppercase tracking-widest disabled:opacity-50"
+                    className="bg-black border-b border-white/10 py-4 outline-none text-sm font-light uppercase tracking-widest disabled:opacity-30"
                   >
                     <option value="" disabled>Select_State</option>
                     {PAKISTAN_STATES.map(state => <option key={state} value={state}>{state}</option>)}
@@ -173,12 +177,15 @@ const PlaceOrder = () => {
                 </div>
 
                 <div className="flex flex-col gap-3 md:col-span-2">
-                  <label className="text-[8px] font-mono uppercase tracking-[0.3em] text-[var(--brand-muted)]">Verification_Phone</label>
-                  <input 
-                    name="phone" required type="tel" pattern="[0-9]{11}" readOnly={useProfileAddress}
-                    value={formData.phone} onChange={onInputChange} placeholder="03XXXXXXXXX" 
-                    className={`bg-transparent border-b border-[var(--brand-border)] py-4 outline-none text-sm uppercase tracking-widest ${useProfileAddress ? 'opacity-50' : ''}`} 
-                  />
+                  <label className="text-[8px] font-mono uppercase tracking-[0.3em] text-white/30">Verification_Phone</label>
+                  <div className="relative">
+                    <input 
+                      name="phone" required type="tel" pattern="[0-9]{11}" readOnly={useProfileAddress}
+                      value={formData.phone} onChange={onInputChange} placeholder="03XXXXXXXXX" 
+                      className={`w-full bg-transparent border-b border-white/10 py-4 outline-none text-sm uppercase tracking-widest ${useProfileAddress ? 'opacity-30 border-dashed' : 'focus:border-white'}`} 
+                    />
+                    {useProfileAddress && <span className="absolute right-0 bottom-4 text-[7px] font-mono text-white/20 uppercase">Encrypted_from_Profile</span>}
+                  </div>
                 </div>
               </div>
             </section>
@@ -186,21 +193,20 @@ const PlaceOrder = () => {
             <button
               disabled={isProcessing}
               type="submit"
-              className="group relative flex items-center justify-center gap-8 px-20 py-6 border border-[var(--brand-accent)] text-[var(--brand-accent)] text-[10px] font-black uppercase tracking-[0.6em] hover:bg-[var(--brand-accent)] hover:text-[var(--brand-alt)] transition-all duration-500"
+              className="group flex items-center justify-center gap-8 w-full md:w-fit px-20 py-6 border border-white text-white text-[10px] font-black uppercase tracking-[0.6em] hover:bg-white hover:text-black transition-all duration-500 disabled:opacity-50"
             >
-              {isProcessing ? <RiLoader4Line className="animate-spin" /> : "Commit Selection"}
+              {isProcessing ? <RiLoader4Line className="animate-spin" /> : "Commit_Acquisition"}
             </button>
           </div>
 
-          {/* RIGHT: Summary Archive */}
           <aside className="w-full lg:w-[40%]">
-            <div className="lg:sticky lg:top-32 border border-[var(--brand-border)] p-10 space-y-12 bg-black/[0.02]">
+            <div className="lg:sticky lg:top-32 border border-white/10 p-10 space-y-12 bg-white/[0.01]">
               <div className="flex justify-between items-center">
                 <h3 className="text-3xl font-serif italic">Manifest</h3>
-                <RiArchiveLine size={24} className="text-[var(--brand-muted)]" />
+                <RiArchiveLine size={24} className="text-white/20" />
               </div>
 
-              <div className="space-y-8 max-h-[400px] overflow-y-auto no-scrollbar pr-2">
+              <div className="space-y-8 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">
                 {cart.map((item, i) => {
                   const pData = item.productId && typeof item.productId === 'object' ? item.productId : item;
                   const displayImg = pData.image?.[0]?.url || pData.img || item.img;
@@ -208,37 +214,29 @@ const PlaceOrder = () => {
                   const discountedPrice = pData.price * (1 - discountPercent / 100);
 
                   return (
-                    <div key={i} className="flex gap-6 items-start border-b border-[var(--brand-border)]/30 pb-6">
-                      <div className="w-16 h-20 bg-[var(--brand-alt)] border border-[var(--brand-border)] overflow-hidden shrink-0">
-                        <img src={displayImg} className="w-full h-full object-cover grayscale" alt="" />
+                    <div key={i} className="flex gap-6 items-start border-b border-white/5 pb-6">
+                      <div className="w-16 h-20 bg-zinc-900 border border-white/10 overflow-hidden shrink-0">
+                        <img src={displayImg} className="w-full h-full object-cover grayscale opacity-70" alt="" />
                       </div>
-                      <div className="flex-grow space-y-1">
-                        <p className="text-[11px] uppercase tracking-wider font-black">{pData.name}</p>
-                        <div className="flex flex-col gap-1">
-                          {/* COLOR AND SIZE MENTIONED HERE */}
-                          <p className="text-[8px] font-mono text-[var(--brand-muted)] uppercase">
-                            COLOR: {item.color || "Neutral"} | SIZE: {item.size}
-                          </p>
-                          <p className="text-[8px] font-mono text-[var(--brand-accent)] uppercase">
-                            QTY: {item.quantity}
-                          </p>
+                      <div className="flex-grow space-y-2">
+                        <p className="text-[10px] uppercase tracking-wider font-black leading-tight">{pData.name}</p>
+                        <div className="flex flex-col gap-1 text-[8px] font-mono text-white/40 uppercase">
+                          <span>Color: {item.color || "Standard"}</span>
+                          <span>Size: {item.size}</span>
+                          <span className="text-white/60">Qty: {item.quantity}</span>
                         </div>
                       </div>
-                      <div className="text-right">
-                        <p className="font-serif italic text-sm">
-                          PKR {(Math.round(discountedPrice) * item.quantity).toLocaleString()}
-                        </p>
-                      </div>
+                      <p className="font-serif italic text-sm">
+                        PKR {(Math.round(discountedPrice) * item.quantity).toLocaleString()}
+                      </p>
                     </div>
                   );
                 })}
               </div>
 
-              <div className="space-y-6 pt-6 border-t border-[var(--brand-border)]">
-                <div className="flex justify-between items-baseline">
-                  <span className="text-[10px] font-mono tracking-[0.5em] uppercase">Total_Due</span>
-                  <span className="text-4xl font-serif italic text-[var(--brand-accent)]">PKR {Math.round(totals.total).toLocaleString()}</span>
-                </div>
+              <div className="pt-6 border-t border-white/10 flex justify-between items-baseline">
+                <span className="text-[10px] font-mono tracking-[0.5em] uppercase text-white/30">Total_Due</span>
+                <span className="text-4xl font-serif italic">PKR {Math.round(totals.total).toLocaleString()}</span>
               </div>
             </div>
           </aside>

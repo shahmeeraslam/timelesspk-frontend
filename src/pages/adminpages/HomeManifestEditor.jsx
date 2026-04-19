@@ -14,6 +14,7 @@ import CurationModule from "../../components/cms/CurationModule";
 import FooterMetadata from "../../components/cms/FooterMetadata";
 import VisualHUD from "../../components/cms/VisualHUD";
 import AboutManifestEditor from "../../components/cms/AboutManifestEditor.jsx";
+import toast from "react-hot-toast";
 
 const HomeManifestEditor = () => {
   const [activeTab, setActiveTab] = useState("TEXT_CONFIG"); 
@@ -54,8 +55,8 @@ const HomeManifestEditor = () => {
   const handleSave = async () => {
     try {
       await API.put("/api/admin/home-config", config);
-      alert("HOME_PROTOCOL_SYNC_SUCCESS");
-    } catch (err) { alert("CRITICAL_SYNC_FAILURE"); }
+      toast.success("HOME_PROTOCOL_SYNC_SUCCESS");
+    } catch (err) { toast.error("CRITICAL_SYNC_FAILURE"); }
   };
 
   if (loading) return (

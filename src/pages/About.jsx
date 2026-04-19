@@ -1,174 +1,224 @@
-import React from "react";
+import React, { useState } from "react";
 import PageTransition from "../components/PageTransition";
+import { useStore } from "../context/StoreContext";
 import { 
   RiArrowRightUpLine, 
-  RiFocus2Line, 
   RiHistoryLine, 
-  RiMicroscopeLine, 
-  RiCornerDownRightLine,
-  RiTerminalBoxLine,
-  RiNodeTree
+  RiFocus3Line,
+  RiPulseLine,
+  RiCompass3Line,
+  RiHexagonLine
 } from "@remixicon/react";
 
 const About = () => {
+  const { cmsData, loading } = useStore();
+  const [hoveredIndex, setHoveredIndex] = useState(null);
+
+  if (loading || !cmsData) {
+    return (
+      <div className="min-h-screen bg-[var(--brand-alt)] flex flex-col items-center justify-center font-mono text-[9px] tracking-[0.8em] text-[var(--brand-accent)] uppercase">
+        <RiPulseLine size={20} className="mb-4 animate-pulse" />
+        <span>Syncing_Archive_Data...</span>
+        <div className="w-32 h-[1px] bg-[var(--brand-border)] mt-4 overflow-hidden relative">
+          <div className="absolute inset-0 bg-[var(--brand-accent)] animate-loading-bar" />
+        </div>
+      </div>
+    );
+  }
+
+  const { aboutPage } = cmsData;
+
   return (
     <PageTransition>
-      {/* Container now uses your specific midnight navy: --brand-alt */}
       <div className="min-h-screen bg-[var(--brand-alt)] text-[var(--brand-main)] font-sans antialiased selection:bg-[var(--brand-accent)] selection:text-[var(--brand-alt)] overflow-x-hidden">
         
-        {/* --- ATMOSPHERIC LAYERS --- */}
-        <div className="fixed inset-0 overflow-hidden pointer-events-none z-0">
-          {/* Using your soft bg variable for the radial glows */}
-          <div className="absolute top-[-10%] left-[-5%] w-[60%] h-[60%] bg-[var(--brand-soft-bg)] blur-[140px] rounded-full animate-pulse opacity-20" />
-          <div className="absolute bottom-[-5%] right-[-5%] w-[40%] h-[40%] bg-[var(--brand-border)] blur-[100px] rounded-full opacity-30" />
-          {/* Subtle Scanline Effect - Colorized to match the navy theme */}
-          <div className="absolute inset-0 bg-[linear-gradient(rgba(2,11,25,0)_50%,rgba(0,0,0,0.3)_50%),linear-gradient(90deg,rgba(212,175,55,0.01),rgba(26,46,71,0.02),rgba(212,175,55,0.01))] z-10 bg-[length:100%_2px,3px_100%] pointer-events-none opacity-40" />
+        {/* --- DYNAMIC BACKGROUND SYSTEM --- */}
+        <div className="fixed inset-0 pointer-events-none z-0">
+          <div className="absolute top-0 right-0 w-1/2 h-screen bg-[radial-gradient(circle_at_70%_20%,rgba(212,175,55,0.05)_0%,transparent_70%)]" />
+          <div className="absolute inset-0 bg-[linear-gradient(rgba(212,175,55,0.01)_1px,transparent_1px),linear-gradient(90deg,rgba(212,175,55,0.01)_1px,transparent_1px)] bg-[size:20px_20px] md:bg-[size:40px_40px] [mask-image:radial-gradient(ellipse_at_center,black,transparent)]" />
         </div>
 
-        {/* --- 1. HEADER: ORIGIN_LOG --- */}
-        <section className="relative pt-48 pb-32 px-6 md:px-12 max-w-7xl mx-auto border-x border-[var(--brand-border)]">
-          <div className="flex items-center gap-6 mb-16">
-            <div className="flex items-center gap-2 px-3 py-1 border border-[var(--brand-border)] bg-[var(--brand-soft-bg)]">
-              <RiHistoryLine size={12} className="text-[var(--brand-accent)]" />
-              <span className="text-[9px] font-mono uppercase tracking-[0.4em] text-[var(--brand-muted)]">Archive_Node_001</span>
-            </div>
-            <div className="h-[1px] flex-grow bg-gradient-to-r from-[var(--brand-border)] to-transparent" />
+        {/* --- 01. THE ARCHITECTURAL HERO --- */}
+        <section className="relative min-h-[85vh] md:h-screen flex flex-col justify-center px-6 md:px-12 border-b border-[var(--brand-border)] py-20 md:py-0">
+          <div className="absolute top-8 md:top-12 left-6 md:left-12 flex items-center gap-3">
+             <RiHexagonLine size={14} className="text-[var(--brand-accent)] animate-spin-slow" />
+             <span className="text-[7px] md:text-[10px] font-mono uppercase tracking-[0.3em] md:tracking-[0.5em] opacity-40">System_Node // About_v02</span>
           </div>
-          
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-16 items-start">
-            <div className="lg:col-span-9">
-              <h1 className="text-6xl md:text-9xl font-serif italic mb-12 leading-[0.85] uppercase tracking-tighter">
-                Defining <br/> 
-                <span className="relative inline-block hover:pl-10 transition-all duration-1000 ease-out group">
-                  <span className="absolute left-0 top-1/2 -translate-y-1/2 w-0 h-[1px] bg-[var(--brand-accent)] group-hover:w-8 transition-all duration-700" />
-                  Quiet_Confidence.
+
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 md:gap-8 items-center">
+            <div className="lg:col-span-10">
+              <h1 className="text-[14vw] md:text-[12vw] lg:text-[10vw] font-serif italic leading-[0.9] md:leading-[0.85] uppercase tracking-tighter mix-blend-difference">
+                {aboutPage?.hero?.titleTop || "Pure"} <br/>
+                <span className="text-[var(--brand-accent)] not-italic font-sans font-black tracking-[-0.03em] flex items-center gap-3 md:gap-8">
+                  {aboutPage?.hero?.titleBottom || "Aesthetic"}
+                  <div className="hidden md:block h-[1px] md:h-[2px] flex-grow bg-[var(--brand-accent)] origin-left animate-grow-x" />
                 </span>
               </h1>
             </div>
-            <div className="lg:col-span-3 space-y-8 lg:pt-8">
-               <RiCornerDownRightLine size={32} className="text-[var(--brand-border)]" />
-               <p className="text-[10px] font-mono text-[var(--brand-muted)] uppercase leading-relaxed tracking-[0.3em] pl-4 border-l border-[var(--brand-border)]">
-                Bold_Comfort operates at the intersection of tactile luxury and digital precision. 
-                We exist for the curator, not the consumer.
-               </p>
+            
+            <div className="lg:col-span-2 flex lg:flex-col gap-6 md:gap-12 justify-between lg:justify-end lg:text-right mt-10 md:mt-0">
+              <div className="space-y-1">
+                <span className="text-[6px] md:text-[8px] font-mono opacity-30 block uppercase">Established</span>
+                <span className="text-[9px] md:text-xs font-mono tracking-wider">PK_2026</span>
+              </div>
+              <div className="space-y-1">
+                <span className="text-[6px] md:text-[8px] font-mono opacity-30 block uppercase">Coordinates</span>
+                <span className="text-[9px] md:text-xs font-mono tracking-wider">33.6844° N</span>
+              </div>
             </div>
+          </div>
+
+          <div className="mt-12 md:mt-24 max-w-lg border-l border-[var(--brand-accent)] pl-5 md:pl-8">
+             <p className="text-[10px] md:text-sm font-mono uppercase tracking-widest leading-relaxed opacity-70 md:opacity-60 italic">
+               {aboutPage?.hero?.sideNote || "Operating at the intersection of tactile luxury and digital precision."}
+             </p>
           </div>
         </section>
 
-        {/* --- 2. MANIFESTO: TECHNICAL_DATA --- */}
-        <section className="relative py-40 border-y border-[var(--brand-border)] bg-[var(--brand-soft-bg)]">
-          <div className="max-w-7xl mx-auto px-6 md:px-12 grid grid-cols-1 lg:grid-cols-2 gap-32 items-center">
-            <div className="relative group cursor-crosshair">
-              <div className="absolute -top-6 -left-2 text-[8px] font-mono text-[var(--brand-muted)] uppercase tracking-[0.5em]">Frame_Ref: 882-P</div>
-              
-              <div className="overflow-hidden border border-[var(--brand-border)] bg-[var(--brand-alt)] shadow-2xl">
-                <img
-                  src="https://imgs.search.brave.com/deey3HdUAOm8jnKZ1gzlL99kloTejhqgiwIqF9aQri8/rs:fit:860:0:0:0/g:ce/aHR0cHM6Ly9ibG9n/LmxhbmllcmkuY29t/L3dwLWNvbnRlbnQv/dXBsb2Fkcy8yMDIw/LzAzL2ZvcmJpY2kt/ZS1tZXRyby1zYXJ0/b3JpYWxlLTExNzB4/NTUwLmpwZw"
-                  alt="Workshop Detail"
-                  className="w-full h-[600px] object-cover grayscale opacity-40 group-hover:opacity-100 group-hover:scale-105 transition-all duration-[2s] ease-out"
-                />
-              </div>
-              
-              {/* Floating Data Point with Accent Details */}
-              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full p-12 opacity-0 group-hover:opacity-100 transition-opacity duration-700">
-                <div className="p-6 bg-[var(--brand-alt)]/90 backdrop-blur-2xl border border-[var(--brand-accent)]/30 max-w-[240px] shadow-[0_0_40px_rgba(0,0,0,0.5)]">
-                  <RiTerminalBoxLine size={18} className="mb-4 text-[var(--brand-accent)]" />
-                  <p className="text-[9px] font-mono uppercase tracking-widest leading-relaxed text-[var(--brand-main)]">
-                    [System_Note]: Fiber density verified via mechanical tensioning. 100% Provenance.
-                  </p>
+        {/* --- 02. MANIFESTO: THE BORDERLESS GRID --- */}
+        <section className="relative border-b border-[var(--brand-border)]">
+          <div className="grid grid-cols-1 lg:grid-cols-2">
+            <div className="relative aspect-[3/4] md:aspect-square lg:aspect-auto h-full border-b lg:border-b-0 lg:border-r border-[var(--brand-border)] group overflow-hidden bg-[var(--brand-soft-bg)]">
+              <img 
+                src={aboutPage?.manifesto?.image || "https://images.unsplash.com/photo-1441986300917-64674bd600d8?q=80&w=2070&auto=format&fit=crop"} 
+                className="w-full h-full object-cover grayscale opacity-60 lg:opacity-50 md:group-hover:opacity-100 md:group-hover:scale-105 transition-all duration-1000"
+                alt="Archive Concept"
+              />
+              <div className="absolute inset-0 bg-black/20 md:group-hover:bg-transparent transition-colors" />
+              <div className="absolute top-5 left-5 md:top-8 md:left-8">
+                <div className="bg-[var(--brand-alt)] border border-[var(--brand-border)] p-3 md:p-4 backdrop-blur-xl">
+                  <RiCompass3Line size={16} className="text-[var(--brand-accent)] mb-2" />
+                  <span className="text-[6px] md:text-[8px] font-mono uppercase tracking-widest block opacity-50">Archive_Ref</span>
+                  <span className="text-[8px] md:text-[10px] font-mono uppercase">
+                    {aboutPage?.manifesto?.systemNote || "PROVENANCE_LOG_00"}
+                  </span>
                 </div>
               </div>
             </div>
 
-            <div className="space-y-16">
-              <div className="space-y-8">
-                <div className="flex items-center gap-4 text-[var(--brand-muted)]/30">
-                    <RiNodeTree size={16} />
-                    <span className="text-[10px] font-mono uppercase tracking-[0.5em]">Philosophy_Thread</span>
-                </div>
-                <h3 className="text-5xl font-serif italic tracking-tight">The "Slow" Manifesto</h3>
-                <p className="text-sm font-light leading-loose text-[var(--brand-muted)] max-w-md">
-                  In an era of disposable trends, we choose the difficult path. Our garments are released as <span className="text-[var(--brand-main)] italic underline underline-offset-8 decoration-[var(--brand-accent)]/40">Archives</span>, curated to withstand the erosion of time.
+            <div className="p-8 md:p-16 lg:p-24 flex flex-col justify-center space-y-10 md:space-y-16">
+              <div className="space-y-5">
+                <span className="text-[8px] md:text-[10px] font-mono text-[var(--brand-accent)] uppercase tracking-[0.4em] block underline underline-offset-4 decoration-1">The_Philosophy</span>
+                <h2 className="text-3xl md:text-6xl lg:text-7xl font-serif italic leading-tight">
+                  {aboutPage?.manifesto?.title || "Quiet Confidence."}
+                </h2>
+                <p className="text-sm md:text-lg font-light leading-relaxed opacity-80 md:opacity-70 max-w-sm md:max-w-md whitespace-pre-line">
+                  {aboutPage?.manifesto?.text || "In a world of constant noise, we choose the weight of silence."}
                 </p>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-12 pt-16 border-t border-[var(--brand-border)]">
-                <div className="space-y-4 group">
-                  <h4 className="text-[10px] uppercase tracking-[0.4em] font-black text-[var(--brand-muted)] group-hover:text-[var(--brand-accent)] transition-colors flex items-center gap-3">
-                    <RiFocus2Line size={12} /> Provenance
-                  </h4>
-                  <p className="text-[11px] font-light leading-relaxed text-[var(--brand-muted)]/60 group-hover:text-[var(--brand-main)] transition-colors">
-                    Traceable materials from ethical, family-owned farms. Verified at the source.
-                  </p>
-                </div>
-                <div className="space-y-4 group">
-                  <h4 className="text-[10px] uppercase tracking-[0.4em] font-black text-[var(--brand-muted)] group-hover:text-[var(--brand-accent)] transition-colors flex items-center gap-3">
-                    <RiMicroscopeLine size={12} /> Longevity
-                  </h4>
-                  <p className="text-[11px] font-light leading-relaxed text-[var(--brand-muted)]/60 group-hover:text-[var(--brand-main)] transition-colors">
-                    Sartorial techniques meant to outlast the current digital epoch.
-                  </p>
-                </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-8 md:gap-12 border-t border-[var(--brand-border)] pt-8 md:pt-12">
+                 <div className="space-y-3">
+                    <RiFocus3Line size={16} className="text-[var(--brand-accent)]" />
+                    <h4 className="text-[9px] md:text-xs font-black uppercase tracking-widest">Structural Integrity</h4>
+                    <p className="text-[8px] md:text-[10px] font-mono opacity-50 leading-relaxed uppercase">
+                      Fiber density verified via mechanical tensioning.
+                    </p>
+                 </div>
+                 <div className="space-y-3">
+                    <RiHistoryLine size={16} className="text-[var(--brand-accent)]" />
+                    <h4 className="text-[9px] md:text-xs font-black uppercase tracking-widest">Epochal Design</h4>
+                    <p className="text-[8px] md:text-[10px] font-mono opacity-50 leading-relaxed uppercase">
+                      Curated to withstand the erosion of digital cycles.
+                    </p>
+                 </div>
               </div>
             </div>
           </div>
         </section>
 
-        {/* --- 3. PILLARS: DISCIPLINE_GRID --- */}
-        <section className="py-40 px-6 md:px-12 max-w-7xl mx-auto border-x border-[var(--brand-border)]">
-          <div className="flex justify-between items-center mb-24">
-            <h2 className="text-3xl font-serif italic">Core_Disciplines</h2>
-            <span className="text-[9px] font-mono text-[var(--brand-muted)]/40 uppercase tracking-[0.6em]">Catalog_Index_01</span>
+        {/* --- 03. THE HORIZONTAL CATALOG --- */}
+        <section className="py-16 md:py-32 px-6 md:px-12 bg-[var(--brand-soft-bg)] overflow-hidden">
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4 mb-12 md:mb-24">
+            <h2 className="text-5xl md:text-8xl lg:text-9xl font-black uppercase tracking-tighter leading-none opacity-5 select-none">
+              Disciplines
+            </h2>
+            <div className="flex items-center gap-3">
+              <span className="text-[7px] md:text-[9px] font-mono uppercase tracking-[0.4em] opacity-40">Core_Methodology</span>
+              <div className="w-6 md:w-12 h-[1px] bg-[var(--brand-accent)]" />
+            </div>
           </div>
-          
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-1px bg-[var(--brand-border)] border border-[var(--brand-border)]">
-            {[
-              { id: '01', title: 'Textiles', desc: 'Raw silk, Giza cotton, and Loro Piana cashmere.', img: 'https://imgs.search.brave.com/hiOV4FROFXliXVhsE8F1w7MX314g374GFEPcGUKdrd0/rs:fit:860:0:0:0/g:ce/aHR0cHM6Ly9taW5p/bWFsdmludGFnZS5j/b20vY2RuL3Nob3Av/ZmlsZXMvMTNkMjVm/NjUtMWRjZC00ZGQx/LTg3MzAtYjA1Y2Nm/MjhiOTEyLmpwZz92/PTE3MjY2OTQyMTMm/d2lkdGg9NjAw' },
-              { id: '02', title: 'Horology', desc: 'Mechanical movements with zero electronic interference.', img: 'https://images.unsplash.com/photo-1523170335258-f5ed11844a49?q=80&w=2080&auto=format&fit=crop' },
-              { id: '03', title: 'Studio', desc: 'London-based. Minimal footprint. Operating globally.', img: 'https://images.unsplash.com/photo-1449247709967-d4461a6a6103?q=80&w=2071&auto=format&fit=crop' }
-            ].map((pillar) => (
-              <div key={pillar.id} className="bg-[var(--brand-alt)] p-10 group transition-all duration-700 hover:bg-[var(--brand-soft-bg)]">
-                <div className="flex justify-between items-center mb-8">
-                    <span className="text-[10px] font-mono text-[var(--brand-muted)]/40 group-hover:text-[var(--brand-accent)] transition-colors">[{pillar.id}]</span>
-                    <div className="w-8 h-[1px] bg-[var(--brand-border)] group-hover:w-12 group-hover:bg-[var(--brand-accent)] transition-all duration-700" />
+
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-px bg-[var(--brand-border)] border border-[var(--brand-border)]">
+            {aboutPage?.disciplines?.length > 0 ? (
+              aboutPage.disciplines.map((item, idx) => (
+                <div 
+                  key={idx}
+                  className="bg-[var(--brand-alt)] p-8 md:p-12 group transition-all duration-700 relative overflow-hidden h-[350px] md:h-[500px] flex flex-col justify-end"
+                >
+                  <div className="absolute top-8 left-8 md:top-12 md:left-12 opacity-15 md:opacity-10 md:group-hover:opacity-100 transition-opacity z-20">
+                    <span className="text-3xl md:text-6xl font-serif italic text-[var(--brand-accent)]">0{idx + 1}</span>
+                  </div>
+                  
+                  {item.image && (
+                    <img 
+                      src={item.image} 
+                      className="absolute inset-0 w-full h-full object-cover grayscale opacity-25 md:opacity-0 md:group-hover:opacity-20 md:group-hover:scale-110 transition-all duration-1000" 
+                      alt={item.title}
+                    />
+                  )}
+
+                  <div className="relative z-10 space-y-3 md:space-y-6">
+                    <h4 className="text-lg md:text-2xl font-black uppercase tracking-tight md:group-hover:text-[var(--brand-accent)] transition-colors">
+                      {item.title}
+                    </h4>
+                    <p className="text-[9px] md:text-xs font-mono uppercase tracking-widest leading-relaxed opacity-60 md:opacity-40 md:group-hover:opacity-100 transition-all">
+                      {item.description}
+                    </p>
+                  </div>
                 </div>
-                <div className="aspect-[4/5] overflow-hidden grayscale opacity-30 group-hover:opacity-100 transition-all duration-[1.5s] mb-10 border border-[var(--brand-border)]">
-                  <img src={pillar.img} className="w-full h-full object-cover scale-110 group-hover:scale-100 transition-all duration-[2s]" alt={pillar.title} />
-                </div>
-                <div className="space-y-4">
-                  <h4 className="text-xs uppercase tracking-[0.5em] font-black group-hover:tracking-[0.6em] transition-all duration-700">{pillar.title}</h4>
-                  <p className="text-[10px] font-mono text-[var(--brand-muted)]/60 leading-loose uppercase tracking-widest">{pillar.desc}</p>
-                </div>
+              ))
+            ) : (
+              <div className="col-span-full py-16 text-center opacity-20 font-mono text-[8px] uppercase tracking-widest">
+                No_Disciplines_Found
               </div>
-            ))}
+            )}
           </div>
         </section>
 
-        {/* --- 4. CTA: FINAL_REGISTRATION --- */}
-        <section className="py-48 px-6 text-center border-t border-[var(--brand-border)] relative group cursor-pointer overflow-hidden">
-          {/* Background Reveal now uses the clean brand-main (off-white) */}
-          <div className="absolute inset-0 bg-[var(--brand-main)] translate-y-full group-hover:translate-y-0 transition-transform duration-1000 ease-[cubic-bezier(0.85,0,0.15,1)]" />
-          
-          <div className="relative z-10 space-y-16 mix-blend-difference">
-            <h3 className="text-6xl md:text-8xl font-serif italic uppercase tracking-tighter text-[var(--brand-main)]">Join_The_Archive</h3>
-            
-            <div className="space-y-4">
-               <div className="flex justify-center items-center gap-4">
-                  <div className="w-1.5 h-1.5 bg-[var(--brand-accent)] rounded-full animate-ping" />
-                  <p className="text-[10px] font-mono tracking-[0.8em] uppercase font-black text-[var(--brand-main)]">Open_Protocol</p>
-               </div>
-               <p className="text-[9px] font-mono opacity-60 uppercase tracking-widest leading-loose max-w-sm mx-auto text-[var(--brand-main)]">
-                 Secure Access to private releases and prototype manifests.
-               </p>
-            </div>
-
-            <button className="inline-flex items-center gap-8 border-b border-[var(--brand-accent)] pb-4 text-[12px] uppercase tracking-[0.8em] font-black hover:gap-16 transition-all duration-700 text-[var(--brand-main)]">
-              Register Interest <RiArrowRightUpLine size={24} />
-            </button>
-          </div>
+        {/* --- 04. THE MINIMALIST CTA --- */}
+        <section className="py-32 md:py-64 flex flex-col items-center justify-center text-center px-6 relative overflow-hidden group">
+           <div className="relative z-10 space-y-8 md:space-y-12">
+              <h2 className="text-4xl md:text-8xl font-serif italic uppercase tracking-tighter mix-blend-difference">
+                Join_The_Archive
+              </h2>
+              <button className="inline-flex items-center gap-5 md:gap-12 border border-[var(--brand-accent)] text-[var(--brand-accent)] px-8 md:px-16 py-3 md:py-6 text-[8px] md:text-[10px] font-mono font-black uppercase tracking-[0.4em] md:tracking-[1em] hover:bg-[var(--brand-accent)] hover:text-[var(--brand-alt)] transition-all duration-700">
+                Establish_Connection <RiArrowRightUpLine size={16} />
+              </button>
+           </div>
+           
+           <div className="absolute inset-0 flex items-center justify-center pointer-events-none opacity-[0.02] md:group-hover:opacity-[0.05] transition-opacity duration-1000">
+              <span className="text-[60vw] md:text-[40vw] font-black whitespace-nowrap leading-none select-none uppercase">
+                {cmsData?.footer?.brandTitleTop || "TIMELESS"}
+              </span>
+           </div>
         </section>
 
       </div>
+
+      <style dangerouslySetInnerHTML={{ __html: `
+        @keyframes loading-bar {
+          0% { transform: translateX(-100%); }
+          100% { transform: translateX(100%); }
+        }
+        @keyframes grow-x {
+          from { transform: scaleX(0); }
+          to { transform: scaleX(1); }
+        }
+        .animate-loading-bar {
+          animation: loading-bar 1.5s infinite linear;
+        }
+        .animate-grow-x {
+          animation: grow-x 1.5s cubic-bezier(0.85, 0, 0.15, 1) forwards;
+        }
+        .animate-spin-slow {
+          animation: spin 12s linear infinite;
+        }
+        @keyframes spin {
+          from { transform: rotate(0deg); }
+          to { transform: rotate(360deg); }
+        }
+      `}} />
     </PageTransition>
   );
 };

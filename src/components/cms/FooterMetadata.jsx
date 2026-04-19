@@ -3,34 +3,57 @@ import {
   RiInstagramLine, 
   RiTwitterXLine, 
   RiGithubLine,
-  RiInformationLine 
+  RiInformationLine,
+  RiLinkM,
+  RiDeleteBin7Line,
+  RiAddLine
 } from "@remixicon/react";
 
 const FooterMetadata = ({ config, setConfig }) => {
   
-  // Helper to update nested social fields
+  if (!config) return null;
+
+  // Helper: Update nested social fields
   const handleSocialChange = (platform, value) => {
     setConfig({
       ...config,
       footer: {
         ...config.footer,
         socials: {
-          ...config.footer.socials,
+          ...(config.footer?.socials || {}),
           [platform]: value
         }
       }
     });
   };
 
-  // Helper for top-level footer fields
+  // Helper: Top-level footer fields
   const handleFooterUpdate = (field, value) => {
     setConfig({
       ...config,
       footer: {
-        ...config.footer,
+        ...(config.footer || {}),
         [field]: value
       }
     });
+  };
+
+  // --- LEGAL LINKS LOGIC ---
+  const addLegalLink = () => {
+    const newLinks = [...(config.footer?.legalLinks || []), { label: "", url: "" }];
+    handleFooterUpdate('legalLinks', newLinks);
+  };
+
+  const removeLegalLink = (index) => {
+    const newLinks = config.footer.legalLinks.filter((_, i) => i !== index);
+    handleFooterUpdate('legalLinks', newLinks);
+  };
+
+  const updateLegalLink = (index, field, value) => {
+    const newLinks = config.footer.legalLinks.map((link, i) => 
+      i === index ? { ...link, [field]: value } : link
+    );
+    handleFooterUpdate('legalLinks', newLinks);
   };
 
   const socialPlatforms = [
@@ -48,31 +71,29 @@ const FooterMetadata = ({ config, setConfig }) => {
       </div>
 
       {/* BRAND IDENTITY */}
-      <div className="space-y-6">
-        <div className="grid grid-cols-1 gap-4">
-          <div className="flex flex-col gap-2">
-            <label className="text-[8px] font-mono opacity-30 uppercase tracking-widest">Brand_Display_Archive</label>
-            <input 
-              placeholder="BRAND_TITLE_TOP" 
-              className="w-full bg-transparent border-b border-[var(--brand-border)] py-2 outline-none font-serif italic text-xl focus:border-[var(--brand-main)] transition-colors" 
-              value={config.footer?.brandTitleTop || ""} 
-              onChange={(e) => handleFooterUpdate('brandTitleTop', e.target.value)} 
-            />
-            <input 
-              placeholder="BRAND_TITLE_BOTTOM" 
-              className="w-full bg-transparent border-b border-[var(--brand-border)] py-2 outline-none font-sans font-black text-xl focus:border-[var(--brand-main)] transition-colors" 
-              value={config.footer?.brandTitleBottom || ""} 
-              onChange={(e) => handleFooterUpdate('brandTitleBottom', e.target.value)} 
-            />
-          </div>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+        <div className="space-y-4">
+          <label className="text-[8px] font-mono opacity-30 uppercase tracking-widest">Brand_Identity_Display</label>
+          <input 
+            placeholder="TITLE_TOP" 
+            className="w-full bg-transparent border-b border-[var(--brand-border)] py-2 outline-none font-serif italic text-xl focus:border-[var(--brand-main)] transition-colors placeholder:opacity-20" 
+            value={config.footer?.brandTitleTop || ""} 
+            onChange={(e) => handleFooterUpdate('brandTitleTop', e.target.value)} 
+          />
+          <input 
+            placeholder="TITLE_BOTTOM" 
+            className="w-full bg-transparent border-b border-[var(--brand-border)] py-2 outline-none font-sans font-black text-xl focus:border-[var(--brand-main)] transition-colors placeholder:opacity-20" 
+            value={config.footer?.brandTitleBottom || ""} 
+            onChange={(e) => handleFooterUpdate('brandTitleBottom', e.target.value)} 
+          />
         </div>
 
         <div className="flex flex-col gap-2">
-          <label className="text-[8px] font-mono opacity-30 uppercase tracking-widest text-right">Mission_Statement_Protocol</label>
+          <label className="text-[8px] font-mono opacity-30 uppercase tracking-widest">Mission_Statement_Protocol</label>
           <textarea 
             placeholder="SYSTEM_MISSION_STATEMENT" 
-            rows={3} 
-            className="w-full bg-black/20 border border-[var(--brand-border)] p-4 outline-none text-[10px] font-mono tracking-widest focus:border-[var(--brand-main)] transition-colors" 
+            rows={4} 
+            className="w-full h-full bg-black/20 border border-[var(--brand-border)] p-4 outline-none text-[10px] font-mono tracking-widest focus:border-[var(--brand-main)] transition-colors resize-none" 
             value={config.footer?.missionStatement || ""} 
             onChange={(e) => handleFooterUpdate('missionStatement', e.target.value)} 
           />
@@ -84,7 +105,7 @@ const FooterMetadata = ({ config, setConfig }) => {
         <h4 className="text-[9px] font-mono uppercase tracking-[0.2em] opacity-40 flex items-center gap-2">
           <RiInformationLine size={12} /> Social_Connectivity_Nodes
         </h4>
-        <div className="grid grid-cols-1 gap-3">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
           {socialPlatforms.map((platform) => (
             <div key={platform.id} className="group flex items-center gap-3 bg-black/20 border border-white/5 p-1 pr-3 focus-within:border-[var(--brand-main)] transition-colors">
               <div className="bg-white/5 p-2 text-white/40 group-focus-within:text-[var(--brand-main)] transition-colors">
@@ -92,12 +113,57 @@ const FooterMetadata = ({ config, setConfig }) => {
               </div>
               <input 
                 placeholder={`${platform.label.toUpperCase()}_URL`}
-                className="w-full bg-transparent py-2 text-[10px] font-mono outline-none text-white/80"
+                className="w-full bg-transparent py-2 text-[10px] font-mono outline-none text-white/80 placeholder:opacity-20"
                 value={config.footer?.socials?.[platform.id] || ""}
                 onChange={(e) => handleSocialChange(platform.id, e.target.value)}
               />
             </div>
           ))}
+        </div>
+      </div>
+
+      {/* LEGAL LINKS ARRAY MANAGEMENT */}
+      <div className="pt-6 border-t border-white/5 space-y-4">
+        <div className="flex justify-between items-center">
+          <h4 className="text-[9px] font-mono uppercase tracking-[0.2em] opacity-40 flex items-center gap-2">
+            <RiLinkM size={12} /> Legal_Policy_Manifest
+          </h4>
+          <button 
+            onClick={addLegalLink}
+            className="flex items-center gap-2 text-[8px] font-mono bg-[var(--brand-main)] text-[var(--brand-alt)] px-3 py-1 hover:bg-[var(--brand-accent)] transition-colors uppercase tracking-widest"
+          >
+            <RiAddLine size={12} /> Add_Entry
+          </button>
+        </div>
+
+        <div className="space-y-2">
+          {config.footer?.legalLinks?.map((link, index) => (
+            <div key={index} className="flex items-center gap-2 animate-in slide-in-from-left-2 duration-300">
+              <input 
+                placeholder="LABEL (e.g. PRIVACY)" 
+                className="flex-[1] bg-black/20 border border-[var(--brand-border)] p-2 text-[9px] font-mono outline-none focus:border-[var(--brand-main)]"
+                value={link.label}
+                onChange={(e) => updateLegalLink(index, 'label', e.target.value)}
+              />
+              <input 
+                placeholder="URL_PATH" 
+                className="flex-[2] bg-black/20 border border-[var(--brand-border)] p-2 text-[9px] font-mono outline-none focus:border-[var(--brand-main)]"
+                value={link.url}
+                onChange={(e) => updateLegalLink(index, 'url', e.target.value)}
+              />
+              <button 
+                onClick={() => removeLegalLink(index)}
+                className="p-2 text-white/20 hover:text-red-500 transition-colors"
+              >
+                <RiDeleteBin7Line size={14} />
+              </button>
+            </div>
+          ))}
+          {(!config.footer?.legalLinks || config.footer.legalLinks.length === 0) && (
+            <div className="text-center py-4 border border-dashed border-white/10 opacity-20 text-[9px] font-mono uppercase tracking-[0.3em]">
+              No_Legal_Entries_Detected
+            </div>
+          )}
         </div>
       </div>
     </section>

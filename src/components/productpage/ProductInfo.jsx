@@ -1,6 +1,5 @@
 import React from "react";
-import { useNavigate } from "react-router-dom"; // 1. Import Navigation
-// import { useAuth } from "../context/AuthContext"; // 2. Assuming you have an AuthContext
+import { useNavigate } from "react-router-dom";
 import { 
   RiAddLine, 
   RiInformationLine, 
@@ -8,30 +7,44 @@ import {
   RiStarFill, 
   RiRuler2Line, 
   RiPercentLine,
-  RiLockLine // Added for visual feedback on login requirement
+  RiLockLine,
+  RiAlertLine
 } from "@remixicon/react";
+import toast from "react-hot-toast";
 
 const ProductInfo = ({ product, selectedSize, setSelectedSize, selectedColor, setSelectedColor, onAdd }) => {
   const navigate = useNavigate();
-  // const { token } = useAuth(); // Replace with your actual auth state logic
-  const token = localStorage.getItem("token"); // Fallback check if context isn't ready
+  const token = localStorage.getItem("token");
   
   const sizes = ["S", "M", "L", "XL", "XXL"];
   
   const getSwatchStyle = (color) => {
-    if (color === "Neutral") return { background: "linear-gradient(135deg, #1a1a1a 0%, #333 100%)" };
-    const isHex = /^#([A-Fa-f0-9]{3}){1,2}$/.test(color);
-    return { backgroundColor: isHex ? color : color.toLowerCase() };
+    const colorMap = {
+      "Neutral": "linear-gradient(135deg, #1a1a1a 0%, #333 100%)",
+      "Navy": "#000080",
+      "Black": "#000000",
+      "White": "#ffffff"
+    };
+    
+    const style = colorMap[color] || color;
+    return style.startsWith('linear') ? { background: style } : { backgroundColor: style };
   };
 
   const isOutOfStock = product.stock <= 0;
+  const isLowStock = product.stock > 0 && product.stock <= 5;
   const hasDiscount = product.discount > 0;
+  
+  const priceAfterDiscount = product.price * (1 - (product.discount || 0) / 100);
 
-  // --- AUTHENTICATION GATE ---
   const handleAcquire = () => {
     if (!token) {
-      // Redirect to login if token is missing
       navigate("/login");
+      return;
+    }
+    if (!selectedSize || !selectedColor) {
+      toast.error("IDENTIFICATION_REQUIRED: Select Size and Finish", {
+        style: { background: '#000', color: '#fff', fontSize: '10px', border: '1px solid #333' }
+      });
       return;
     }
     onAdd();
@@ -40,7 +53,6 @@ const ProductInfo = ({ product, selectedSize, setSelectedSize, selectedColor, se
   return (
     <div className="space-y-10 md:space-y-12 text-white selection:bg-white selection:text-black">
       
-      {/* 1. BRANDING & IDENTIFICATION */}
       <header className="space-y-4">
         <div className="flex items-center justify-between border-b border-white/5 pb-4">
           <div className="flex items-center gap-3">
@@ -70,11 +82,10 @@ const ProductInfo = ({ product, selectedSize, setSelectedSize, selectedColor, se
           {product.name}
         </h1>
         
-        {/* VALUATION TERMINAL */}
         <div className="space-y-4">
           <div className="flex items-baseline gap-4">
-            <span className={`text-3xl font-light tracking-tighter ${hasDiscount ? 'text-[var(--brand-main)]' : 'text-white'}`}>
-              PKR {product.salePrice?.toLocaleString() || product.price?.toLocaleString()}.00
+            <span className="text-3xl font-light tracking-tighter text-white">
+              PKR {Math.round(priceAfterDiscount).toLocaleString()}.00
             </span>
             {hasDiscount && (
               <span className="text-sm font-mono text-white/20 line-through decoration-white/40">
@@ -94,6 +105,13 @@ const ProductInfo = ({ product, selectedSize, setSelectedSize, selectedColor, se
               <span className="text-[9px] font-mono uppercase text-red-500 tracking-widest px-2 py-1 bg-red-500/10 border border-red-500/20">
                 DEPLETED
               </span>
+            ) : isLowStock ? (
+              <div className="flex items-center gap-2 px-2 py-1 bg-orange-500/10 border border-orange-500/20">
+                <RiAlertLine size={10} className="text-orange-500" />
+                <span className="text-[9px] font-mono uppercase text-orange-500 tracking-widest">
+                  Critical_Stock: {product.stock}_Remaining
+                </span>
+              </div>
             ) : (
                <span className="text-[9px] font-mono uppercase text-emerald-500/60 tracking-widest px-2 py-1 bg-emerald-500/5 border border-emerald-500/10">
                 In_Vault
@@ -103,7 +121,7 @@ const ProductInfo = ({ product, selectedSize, setSelectedSize, selectedColor, se
         </div>
       </header>
 
-      {/* 2. COLOR SELECTION ARCHIVE */}
+      {/* Surface Finish / Color Selection */}
       <div className="space-y-6">
         <div className="flex justify-between items-baseline">
           <p className="text-[9px] font-mono uppercase tracking-[0.4em] text-white/30">Surface_Finish</p>
@@ -113,18 +131,6 @@ const ProductInfo = ({ product, selectedSize, setSelectedSize, selectedColor, se
         </div>
         
         <div className="flex flex-wrap gap-4 md:gap-5">
-          <button
-            onClick={() => setSelectedColor("Neutral")}
-            className={`group relative w-12 h-12 rounded-full border transition-all duration-500 flex items-center justify-center ${
-              selectedColor === "Neutral" 
-                ? 'border-white bg-white/5 scale-110' 
-                : 'border-white/10 hover:border-white/30'
-            }`}
-          >
-            <div className="w-8 h-8 rounded-full shadow-2xl transition-transform group-hover:scale-90 duration-500" style={getSwatchStyle("Neutral")} />
-            {selectedColor === "Neutral" && <RiCheckLine size={14} className="absolute text-white" />}
-          </button>
-
           {product.colors?.map((color) => (
             <button
               key={color}
@@ -142,7 +148,7 @@ const ProductInfo = ({ product, selectedSize, setSelectedSize, selectedColor, se
         </div>
       </div>
 
-      {/* 3. DIMENSIONAL SELECTOR */}
+      {/* Dimensions / Size Selection */}
       <div className="space-y-6">
         <div className="flex justify-between items-baseline">
           <span className="text-[9px] font-mono uppercase tracking-[0.4em] text-white/30">Dimensions</span>
@@ -168,11 +174,11 @@ const ProductInfo = ({ product, selectedSize, setSelectedSize, selectedColor, se
         </div>
       </div>
 
-      {/* 4. PRIMARY ACTION */}
+      {/* Action CTA */}
       <div className="pt-4 space-y-6">
         <button 
-          onClick={handleAcquire} // Swapped onAdd for handleAcquire
-          disabled={(!selectedSize || !selectedColor || isOutOfStock) && token}
+          onClick={handleAcquire}
+          disabled={token && isOutOfStock}
           className="group relative w-full overflow-hidden bg-white py-7 text-black transition-all active:scale-[0.98] disabled:opacity-20 disabled:cursor-not-allowed"
         >
           <div className="absolute inset-0 bg-neutral-200 translate-y-full group-hover:translate-y-0 transition-transform duration-500 ease-out" />
@@ -199,14 +205,16 @@ const ProductInfo = ({ product, selectedSize, setSelectedSize, selectedColor, se
             </p>
             {!isOutOfStock && (
               <div className="flex items-center gap-2 px-3 py-1 bg-white/[0.03] border border-white/5">
-                <div className="w-1 h-1 bg-[var(--brand-main)] rounded-full animate-pulse" />
-                <span className="text-[7px] font-mono text-[var(--brand-main)] uppercase tracking-[0.3em]">Stock_Sync_Confirmed</span>
+                <div className={`w-1 h-1 rounded-full animate-pulse ${isLowStock ? 'bg-orange-500' : 'bg-[var(--brand-main)]'}`} />
+                <span className={`text-[7px] font-mono uppercase tracking-[0.3em] ${isLowStock ? 'text-orange-500' : 'text-[var(--brand-main)]'}`}>
+                  {isLowStock ? "Limited_Availability_Confirmed" : "Stock_Sync_Confirmed"}
+                </span>
               </div>
             )}
         </div>
       </div>
 
-      {/* 5. CURATORIAL DATA */}
+      {/* Curator Commentary Section */}
       <div className="pt-10 border-t border-white/5">
         <div className="flex items-center gap-4 mb-4">
           <RiInformationLine size={14} className="text-[var(--brand-main)]" />

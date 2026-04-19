@@ -2,6 +2,7 @@ import API from "../../../api";
 import React, { useState, useMemo, useRef, useEffect } from "react";
 import { useCart } from "../../context/CartContext"; 
 import { RiStarFill, RiSendPlaneLine, RiImageAddLine, RiCloseLine, RiCheckLine } from "@remixicon/react";
+import toast from "react-hot-toast";
 
 const ReviewForm = ({ productId, onReviewAdded }) => {
   const { user: contextUser } = useCart(); 
@@ -60,7 +61,7 @@ const ReviewForm = ({ productId, onReviewAdded }) => {
       if (onReviewAdded) onReviewAdded();
       setTimeout(() => setIsSuccess(false), 3000);
     } catch (error) {
-      alert(error.response?.data?.message || "Transmission_Failure");
+      toast.error(error.response?.data?.message || "Transmission_Failure");
     } finally {
       setLoading(false);
     }
