@@ -5,6 +5,25 @@ const OrderRow = ({ order, getOrderId, getStatusTheme, onSelect }) => {
   const theme = getStatusTheme(order.status);
   const currentId = getOrderId(order);
 
+  // DEFENSIVE LOGIC: Safely extract thumbnail for any data state
+  const getThumbnail = (item) => {
+    // 1. Check for the snapshot image array (highest priority)
+    if (item?.image && Array.isArray(item.image) && item.image.length > 0) {
+      const colorMatch = item.image.find(img => 
+        img.color?.toLowerCase() === item.color?.toLowerCase()
+      );
+      return colorMatch ? colorMatch.url : item.image[0].url;
+    }
+
+    // 2. Check for populated productId object
+    if (item?.productId && typeof item.productId === 'object' && item.productId.image?.[0]?.url) {
+      return item.productId.image[0].url;
+    }
+
+    // 3. Last resort fallback (prevents 'undefined' crash)
+    return item?.img || "https://placehold.co/400x500/000000/333333?text=NO_IMAGE";
+  };
+
   return (
     <div className="group relative grid grid-cols-1 lg:grid-cols-12 items-center bg-black hover:bg-white/[0.03] transition-all p-8 gap-6 border-b border-white/5 last:border-0">
       
@@ -14,7 +33,7 @@ const OrderRow = ({ order, getOrderId, getStatusTheme, onSelect }) => {
           #{currentId.slice(-8).toUpperCase()}
         </p>
         <p className="text-[10px] text-white/40 font-mono italic">
-          {new Date(order.createdAt).toLocaleDateString()}
+          {new Date(order.date?.$date || order.date).toLocaleDateString()}
         </p>
       </div>
 
@@ -28,25 +47,35 @@ const OrderRow = ({ order, getOrderId, getStatusTheme, onSelect }) => {
         </p>
       </div>
 
-      {/* 3. ITEM THUMBNAILS */}
+      {/* 3. ITEM THUMBNAILS (FIXED FOR MULTIPLE ORDERS) */}
       <div className="lg:col-span-3 flex -space-x-4">
-        {order.items?.slice(0, 3).map((item, i) => (
-          <div key={i} className="relative w-10 h-12 bg-zinc-900 border border-black overflow-hidden group/thumb">
-            <img 
-              src={item.productId?.image?.[0]?.url || item.img} 
-              className="w-full h-full object-cover grayscale group-hover/thumb:grayscale-0 transition-all" 
-              alt="" 
-            />
-            {item.color && (
-              <div 
-                className="absolute bottom-0 right-0 w-2 h-2 border-t border-l border-black" 
-                style={{ backgroundColor: item.color }} 
+        {order.items && order.items.length > 0 ? (
+          order.items.slice(0, 3).map((item, i) => (
+            <div 
+              key={`${currentId}-item-${i}`} 
+              className="relative w-10 h-12 bg-zinc-900 border border-black overflow-hidden group/thumb z-[1] hover:z-[10] transition-transform hover:scale-110"
+            >
+              <img 
+                src={getThumbnail(item)} 
+                className="w-full h-full object-cover grayscale group-hover/thumb:grayscale-0 transition-all" 
+                alt="" 
+                // Immediate fallback if the URL itself is broken (404/expired)
+                onError={(e) => { e.target.src = "https://placehold.co/400x500/000000/333333?text=ERR"; }}
               />
-            )}
-          </div>
-        ))}
+              {item.color && (
+                <div 
+                  className="absolute bottom-0 right-0 w-2 h-2 border-t border-l border-black" 
+                  style={{ backgroundColor: item.color }} 
+                />
+              )}
+            </div>
+          ))
+        ) : (
+          <div className="text-[8px] font-mono text-white/10 uppercase tracking-widest">Null_Manifest</div>
+        )}
+        
         {order.items?.length > 3 && (
-          <div className="w-10 h-12 bg-white/5 border border-black flex items-center justify-center text-[8px] font-mono text-white/40 backdrop-blur-sm">
+          <div className="w-10 h-12 bg-white/5 border border-black flex items-center justify-center text-[8px] font-mono text-white/40 backdrop-blur-sm z-[5]">
             +{order.items.length - 3}
           </div>
         )}
@@ -55,7 +84,7 @@ const OrderRow = ({ order, getOrderId, getStatusTheme, onSelect }) => {
       {/* 4. STATUS BADGE */}
       <div className="lg:col-span-2">
         <div className={`inline-flex items-center gap-2 px-4 py-1.5 border ${theme.border} ${theme.bg} ${theme.color} text-[9px] font-mono uppercase tracking-widest`}>
-          <span className="animate-pulse">●</span> {order.status}
+          <span className={order.status === "Pending Verification" ? "animate-pulse" : ""}>●</span> {order.status}
         </div>
       </div>
 
@@ -64,7 +93,7 @@ const OrderRow = ({ order, getOrderId, getStatusTheme, onSelect }) => {
         <div className="text-right mr-6">
           <p className="text-xs font-serif italic text-white/60">Value</p>
           <p className="text-sm font-bold tracking-tighter">
-            {order.amount.toLocaleString()} PKR
+            {Math.round(order.amount || 0).toLocaleString()} PKR
           </p>
         </div>
         <button 

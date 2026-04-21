@@ -71,21 +71,27 @@ const PlaceOrder = () => {
 
     setIsProcessing(true);
     try {
-      const orderData = {
-        address: formData,
-        items: cart.map(item => ({
-          productId: item.productId?._id || item.productId,
-          name: item.name,
-          quantity: item.quantity,
-          size: item.size,
-          color: item.color,
-          price: item.price,
-          image: item.image
-        })),
-        amount: Math.round(totals.total), 
-        paymentMethod: method
+const orderData = {
+    address: formData,
+    items: cart.map(item => {
+      const pData = item.productId && typeof item.productId === 'object' ? item.productId : item;
+      
+      return {
+        productId: pData._id || item.productId,
+        name: pData.name || item.name || "Archive_Item",
+        quantity: item.quantity,
+        size: item.size,
+        color: item.color,
+        price: pData.price || item.price || 0,
+        // SNAPSHOT FIXES:
+        image: pData.image || [], // Full array for Admin
+        category: pData.category || "General", // Fixes category issue
+        img: pData.img || (pData.image?.[0]?.url) || "" // Fixes image display issue
       };
-
+    }),
+    amount: Math.round(totals.total), 
+    paymentMethod: method
+  };
       const response = await API.post("/api/orders/place", orderData);
       if (response.data.success) {
         toast.success("MANIFEST_LOGGED: ARCHIVE_UPDATED");
