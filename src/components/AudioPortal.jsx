@@ -3,22 +3,44 @@ import { motion } from "framer-motion";
 
 const AudioPortal = () => {
   const [isPlaying, setIsPlaying] = useState(false);
-  const [isBlocked, setIsBlocked] = useState(false); // New state for security lockout
+  const [isBlocked, setIsBlocked] = useState(false);
   const audioRef = useRef(null);
+  
+  // Use a ref to track play state internally for the event listener
+  const isPlayingRef = useRef(false);
 
   useEffect(() => {
-    // Ensuring the path points exactly to your public folder asset
     const audioPath = `${window.location.origin}/audio/Audio.mp3`;
     audioRef.current = new Audio(audioPath);
-    
     const audio = audioRef.current;
     audio.loop = true;
     audio.volume = 0.3;
 
-    console.log("Archival_Audio_Initialized:", audioPath);
+    const handleVisibilityChange = () => {
+      // Logic: If the tab is hidden AND the audio was playing...
+      if (document.hidden) {
+        if (isPlayingRef.current) {
+          audio.pause();
+          console.log("Archive_Protocol: Signal_Suspended_In_Background");
+        }
+      } else {
+        // Logic: If the tab becomes visible AND it was playing before we left...
+        if (isPlayingRef.current) {
+          audio.play().catch(() => {
+            setIsBlocked(true); // Handle browser blocking auto-resume
+          });
+          console.log("Archive_Protocol: Signal_Restored");
+        }
+      }
+    };
+
+    // Use 'visibilitychange' on the document level
+    document.addEventListener("visibilitychange", handleVisibilityChange);
 
     return () => {
-      if (audioRef.current) audioRef.current.pause();
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+      audio.pause();
+      audioRef.current = null;
     };
   }, []);
 
@@ -29,17 +51,17 @@ const AudioPortal = () => {
     if (isPlaying) {
       audio.pause();
       setIsPlaying(false);
+      isPlayingRef.current = false; // Update the ref
       setIsBlocked(false);
     } else {
       audio.play()
         .then(() => {
           setIsPlaying(true);
+          isPlayingRef.current = true; // Update the ref
           setIsBlocked(false);
-          console.log("Signal_Established: Audio_Active");
         })
         .catch(err => {
-          console.error("Signal_Blocked: Interaction_Required", err);
-          // If browser blocks, update UI to prompt second click
+          console.error("Auth_Required: Interaction_Missing", err);
           setIsBlocked(true);
         });
     }
@@ -56,7 +78,6 @@ const AudioPortal = () => {
             <motion.div
               key={bar}
               animate={{
-                // If blocked, bars slightly jitter to show they are "stuck"
                 height: isPlaying ? [4, 12, 8, 12, 4] : (isBlocked ? [2, 4, 2] : 2)
               }}
               transition={{
