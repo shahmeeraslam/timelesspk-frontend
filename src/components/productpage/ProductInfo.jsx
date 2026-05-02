@@ -8,7 +8,8 @@ import {
   RiRuler2Line, 
   RiPercentLine,
   RiLockLine,
-  RiAlertLine
+  RiAlertLine,
+  RiShoppingBagLine
 } from "@remixicon/react";
 import toast from "react-hot-toast";
 
@@ -25,7 +26,6 @@ const ProductInfo = ({ product, selectedSize, setSelectedSize, selectedColor, se
       "Black": "#000000",
       "White": "#ffffff"
     };
-    
     const style = colorMap[color] || color;
     return style.startsWith('linear') ? { background: style } : { backgroundColor: style };
   };
@@ -33,9 +33,9 @@ const ProductInfo = ({ product, selectedSize, setSelectedSize, selectedColor, se
   const isOutOfStock = product.stock <= 0;
   const isLowStock = product.stock > 0 && product.stock <= 5;
   const hasDiscount = product.discount > 0;
-  
   const priceAfterDiscount = product.price * (1 - (product.discount || 0) / 100);
 
+  // --- THE ALERT LOGIC ---
   const handleAcquire = () => {
     if (!token) {
       navigate("/login");
@@ -43,11 +43,36 @@ const ProductInfo = ({ product, selectedSize, setSelectedSize, selectedColor, se
     }
     if (!selectedSize || !selectedColor) {
       toast.error("IDENTIFICATION_REQUIRED: Select Size and Finish", {
-        style: { background: '#000', color: '#fff', fontSize: '10px', border: '1px solid #333' }
+        style: { 
+          background: '#0a0a0a', 
+          color: '#ef4444', 
+          fontSize: '10px', 
+          border: '1px solid #ef444433',
+          borderRadius: '0px',
+          fontFamily: 'monospace'
+        }
       });
       return;
     }
+
+    // Call the parent onAdd function
     onAdd();
+
+    // Trigger Success Alert in "System Log" style
+    toast.success(`${product.name.toUpperCase()} // UNIT_MOVED_TO_REGISTRY`, {
+      icon: <RiShoppingBagLine size={16} className="text-emerald-500" />,
+      duration: 3000,
+      style: {
+        background: '#0a0a0a',
+        color: '#fff',
+        border: '1px solid #10b98133',
+        borderRadius: '0px',
+        fontFamily: 'monospace',
+        fontSize: '10px',
+        letterSpacing: '0.1em',
+        textTransform: 'uppercase',
+      },
+    });
   };
 
   return (
@@ -228,4 +253,4 @@ const ProductInfo = ({ product, selectedSize, setSelectedSize, selectedColor, se
   );
 };
 
-export default ProductInfo;
+export default ProductInfo; 

@@ -1,67 +1,89 @@
 import React, { useState, useRef, useEffect } from "react";
 import { motion } from "framer-motion";
 
+// GLOBAL SINGLETON: Initialized once outside the component.
+// This ensures the audio object persists even if this component re-renders or unmounts briefly.
+const globalAudio = typeof window !== 'undefined' ? new Audio(`${window.location.origin}/audio/Audio.mp3`) : null;
+if (globalAudio) {
+  globalAudio.loop = true;
+  globalAudio.volume = 0.3;
+}
+
 const AudioPortal = () => {
   const [isPlaying, setIsPlaying] = useState(false);
   const [isBlocked, setIsBlocked] = useState(false);
-  const audioRef = useRef(null);
   
-  // Use a ref to track play state internally for the event listener
-  const isPlayingRef = useRef(false);
+  // High-priority state tracking to handle background/foreground transitions
+  const state = useRef({
+    isPlaying: false,
+    manualPause: true 
+  });
 
   useEffect(() => {
-    const audioPath = `${window.location.origin}/audio/Audio.mp3`;
-    audioRef.current = new Audio(audioPath);
-    const audio = audioRef.current;
-    audio.loop = true;
-    audio.volume = 0.3;
+    if (!globalAudio) return;
 
-    const handleVisibilityChange = () => {
-      // Logic: If the tab is hidden AND the audio was playing...
-      if (document.hidden) {
-        if (isPlayingRef.current) {
-          audio.pause();
-          console.log("Archive_Protocol: Signal_Suspended_In_Background");
-        }
-      } else {
-        // Logic: If the tab becomes visible AND it was playing before we left...
-        if (isPlayingRef.current) {
-          audio.play().catch(() => {
-            setIsBlocked(true); // Handle browser blocking auto-resume
-          });
-          console.log("Archive_Protocol: Signal_Restored");
-        }
+    // Sync local state with global audio status on mount
+    const currentIsPlaying = !globalAudio.paused;
+    setIsPlaying(currentIsPlaying);
+    state.current.isPlaying = currentIsPlaying;
+    state.current.manualPause = globalAudio.paused;
+
+    const suspendSignal = () => {
+      if (state.current.isPlaying) {
+        globalAudio.pause();
+        setIsPlaying(false);
+        console.log("Protocol_Delta: Signal_Suspended_In_Background");
       }
     };
 
-    // Use 'visibilitychange' on the document level
-    document.addEventListener("visibilitychange", handleVisibilityChange);
+    const resumeSignal = () => {
+      // ONLY resume if it was playing before the user left AND they didn't manually mute it
+      if (state.current.isPlaying && !state.current.manualPause) {
+        globalAudio.play().then(() => setIsPlaying(true)).catch(() => setIsBlocked(true));
+        console.log("Protocol_Delta: Signal_Restored_To_Foreground");
+      }
+    };
+
+    const handleVisibility = () => {
+      if (document.hidden) suspendSignal();
+      else resumeSignal();
+    };
+
+    // Use blur/focus to handle window switching (Alt+Tab)
+    const handleBlur = () => suspendSignal();
+    const handleFocus = () => resumeSignal();
+
+    document.addEventListener("visibilitychange", handleVisibility);
+    window.addEventListener("blur", handleBlur);
+    window.addEventListener("focus", handleFocus);
 
     return () => {
-      document.removeEventListener("visibilitychange", handleVisibilityChange);
-      audio.pause();
-      audioRef.current = null;
+      document.removeEventListener("visibilitychange", handleVisibility);
+      window.removeEventListener("blur", handleBlur);
+      window.removeEventListener("focus", handleFocus);
+      // NOTE: We do NOT call globalAudio.pause() here. 
+      // This allows the sound to keep flowing during page navigation.
     };
   }, []);
 
   const togglePlayback = () => {
-    const audio = audioRef.current;
-    if (!audio) return;
+    if (!globalAudio) return;
 
     if (isPlaying) {
-      audio.pause();
+      globalAudio.pause();
       setIsPlaying(false);
-      isPlayingRef.current = false; // Update the ref
+      state.current.isPlaying = false;
+      state.current.manualPause = true; // Mark that the user chose to stop it
       setIsBlocked(false);
     } else {
-      audio.play()
+      globalAudio.play()
         .then(() => {
           setIsPlaying(true);
-          isPlayingRef.current = true; // Update the ref
+          state.current.isPlaying = true;
+          state.current.manualPause = false; // User chose to start it
           setIsBlocked(false);
         })
-        .catch(err => {
-          console.error("Auth_Required: Interaction_Missing", err);
+        .catch(() => {
           setIsBlocked(true);
         });
     }
@@ -95,10 +117,7 @@ const AudioPortal = () => {
         <span className={`text-[9px] font-mono tracking-[0.3em] uppercase transition-colors hidden sm:block ${
           isBlocked ? 'text-amber-500' : 'text-white/30 group-hover:text-white'
         }`}>
-          {isPlaying 
-            ? "Signal_Active" 
-            : (isBlocked ? "Resume_Handshake" : "Signal_Muted")
-          }
+          {isPlaying ? "Signal_Active" : (isBlocked ? "Resume_Handshake" : "Signal_Muted")}
         </span>
       </button>
     </div>
