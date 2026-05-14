@@ -10,6 +10,7 @@ import ReviewForm from "../components/productpage/ReviewForm";
 import CompleteTheLook from "../components/productpage/CompleteTheLook";
 
 import { RiStarFill, RiHistoryLine, RiCloseLine, RiPlayLine, RiImageLine, RiExpandDiagonalLine } from "@remixicon/react";
+import SEO from "../components/SEO";
 
 const Product = () => {
   const { id } = useParams();
