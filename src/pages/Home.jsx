@@ -10,6 +10,7 @@ import Highlights from "../components/home/Highlights";
 import Lookbook from "../components/home/Lookbook";
 import Footwear from "../components/home/Footwear";
 import Footer from "../components/home/Footer";
+import SEO from "../components/SEO";
 
 const Home = () => {
   const { addToCart } = useCart();
@@ -83,58 +84,67 @@ const Home = () => {
   const featuredItems = (cmsData?.featuredProducts || [])
     .map((id) => products.find((p) => p._id === id))
     .filter(Boolean);
-  const displayHighlights = featuredItems.length > 0 ? featuredItems : products.slice(0, 3);
+  const displayHighlights =
+    featuredItems.length > 0 ? featuredItems : products.slice(0, 3);
 
   // B. Lookbook (Gallery)
   const lookbookItems = (cmsData?.lookbookProducts || [])
     .map((id) => products.find((p) => p._id === id))
     .filter(Boolean);
-  const displayLookbook = lookbookItems.length > 0 ? lookbookItems : products.slice(0, 6);
+  const displayLookbook =
+    lookbookItems.length > 0 ? lookbookItems : products.slice(0, 6);
 
   // C. Footwear (Architecture Section)
   const footwearItems = (cmsData?.footwearProducts || [])
     .map((id) => products.find((p) => p._id === id))
     .filter(Boolean);
-  
+
   // Footwear Fallback: If no curation, filter by category "Shoes"
-  const displayFootwear = footwearItems.length > 0 
-    ? footwearItems 
-    : products.filter(p => p.category?.toLowerCase() === "shoes" || p.category?.toLowerCase() === "footwear").slice(0, 3);
+  const displayFootwear =
+    footwearItems.length > 0
+      ? footwearItems
+      : products
+          .filter(
+            (p) =>
+              p.category?.toLowerCase() === "shoes" ||
+              p.category?.toLowerCase() === "footwear",
+          )
+          .slice(0, 3);
 
   return (
-    <PageTransition>
-      <div className="relative bg-[var(--brand-alt)] text-[var(--brand-main)] overflow-x-hidden max-w-full selection:bg-[var(--brand-main)] selection:text-[var(--brand-alt)]">
-        <HUD
-          mousePos={mousePos}
-          scrollProgress={scrollProgress}
-          announcement={cmsData?.announcement}
-        />
-
-        <main className="w-full relative z-10">
-          <Hero scrollProgress={scrollProgress} data={cmsData} />
-
-          <Highlights 
-            cmsData={cmsData} 
-            items={displayHighlights} 
+    <>
+      <SEO
+        title="Home"
+        description="Authorized Access Only. Explore the VANGUARD technical archive. Deployment-ready units for modern environments."
+      />
+      <PageTransition>
+        <div className="relative bg-[var(--brand-alt)] text-[var(--brand-main)] overflow-x-hidden max-w-full selection:bg-[var(--brand-main)] selection:text-[var(--brand-alt)]">
+          <HUD
+            mousePos={mousePos}
+            scrollProgress={scrollProgress}
+            announcement={cmsData?.announcement}
           />
 
-          <Lookbook
-            cmsData={cmsData}
-            products={displayLookbook}
-            activeArchive={activeArchive || displayLookbook[0]}
-            setActiveArchive={setActiveArchive}
-            onAdd={onAdd}
-          />
+          <main className="w-full relative z-10">
+            <Hero scrollProgress={scrollProgress} data={cmsData} />
 
-          <Footwear 
-            cmsData={cmsData} 
-            shoes={displayFootwear} 
-          />
-        </main>
+            <Highlights cmsData={cmsData} items={displayHighlights} />
 
-        <Footer />
-      </div>
-    </PageTransition>
+            <Lookbook
+              cmsData={cmsData}
+              products={displayLookbook}
+              activeArchive={activeArchive || displayLookbook[0]}
+              setActiveArchive={setActiveArchive}
+              onAdd={onAdd}
+            />
+
+            <Footwear cmsData={cmsData} shoes={displayFootwear} />
+          </main>
+
+          <Footer />
+        </div>
+      </PageTransition>
+    </>
   );
 };
 

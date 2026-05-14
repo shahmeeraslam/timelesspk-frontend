@@ -9,6 +9,7 @@ import { RiLoader4Line, RiCheckboxBlankCircleLine } from "@remixicon/react";
 import CollectionHeader from "../components/collection/CollectionHeader";
 import CollectionFilters from "../components/collection/CollectionFilters";
 import ProductCard from "../components/collection/ProductCard";
+import SEO from "../components/SEO";
 
 const Collection = () => {
   const [products, setProducts] = useState([]);
@@ -55,6 +56,12 @@ const Collection = () => {
   }, [products, filter, search, sortOrder]);
 
   return (
+    <>
+    <SEO 
+  title="Collection" 
+  description="Full index of available Archive Units. Filter by technical classification and performance grade."
+  url="/collection"
+/>
     <PageTransition>
       <div className="min-h-screen bg-[var(--brand-alt)] text-[var(--brand-main)] pt-24 md:pt-32 px-4 md:px-12">
         
@@ -116,6 +123,7 @@ const Collection = () => {
         </div>
       </div>
     </PageTransition>
+    </>
   );
 };
 

@@ -91,6 +91,15 @@ const Product = () => {
   );
 
   return (
+    <>
+    <SEO 
+  title={`${product.name} // UNIT_ID_${product.id.slice(-4)}`} 
+  description={`Detailed specifications for ${product.name}. Category: ${product.category}. Price: ${product.price} PKR. Access core specs here.`}
+  image={product.image[0]}
+  url={`/product/${product.id}`}
+  type="article"
+/>
+      
     <div className="bg-[#050505] min-h-screen pt-24 md:pt-32 pb-20 px-4 md:px-12 text-white selection:bg-white selection:text-black">
       <div className="max-w-[1600px] mx-auto">
         <div className="flex flex-col lg:flex-row gap-10 md:gap-20">
@@ -256,6 +265,7 @@ const Product = () => {
         )}
       </AnimatePresence>
     </div>
+    </>
   );
 };
 

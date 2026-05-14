@@ -50,20 +50,20 @@ const UserPortal = ({ user, isAdmin, profileOpen, setProfileOpen, onLogout }) =>
                       </>
                     ) : (
                       <>
-                        <Link to='/profile' onClick={() => setProfileOpen(false)} className="text-[9px] uppercase tracking-widest text-[var(--brand-muted)] hover:text-[var(--brand-main)]">User_Node</Link>
-                        <Link to="/orders" onClick={() => setProfileOpen(false)} className="text-[9px] uppercase tracking-widest text-[var(--brand-muted)] hover:text-[var(--brand-main)]">Archive_Logs</Link>
+                        <Link to='/profile' onClick={() => setProfileOpen(false)} className="text-[9px] uppercase tracking-widest text-[var(--brand-muted)] hover:text-[var(--brand-main)]">Profile</Link>
+                        <Link to="/orders" onClick={() => setProfileOpen(false)} className="text-[9px] uppercase tracking-widest text-[var(--brand-muted)] hover:text-[var(--brand-main)]">orders</Link>
                       </>
                     )}
                   </div>
                   
-                  <button onClick={onLogout} className="w-full pt-4 border-t border-[var(--brand-border)] text-[8px] font-mono text-red-500 uppercase tracking-widest text-left hover:brightness-150">
-                    Terminate_Session
+                  <button onClick={onLogout} className="w-full pt-4 border-t border-[var(--brand-border)] text-[10px] font-mono text-red-500 uppercase tracking-widest text-left hover:brightness-150">
+                    Logout
                   </button>
                 </>
               ) : (
                 <div className="space-y-4">
-                  <Link to="/login" onClick={() => setProfileOpen(false)} className="block py-2 bg-[var(--brand-main)] text-[var(--brand-alt)] text-[9px] font-mono text-center tracking-widest">Authenticate</Link>
-                  <Link to="/register" onClick={() => setProfileOpen(false)} className="block text-[8px] text-center uppercase tracking-widest text-[var(--brand-muted)]">New_Node</Link>
+                  <Link to="/login" onClick={() => setProfileOpen(false)} className="block py-2 bg-[var(--brand-main)] text-[var(--brand-alt)] text-[9px] font-mono text-center tracking-widest">Login</Link>
+                  <Link to="/register" onClick={() => setProfileOpen(false)} className="block text-[8px] text-center uppercase tracking-widest text-[var(--brand-muted)]">Register</Link>
                 </div>
               )}
             </div>

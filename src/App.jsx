@@ -32,14 +32,15 @@ import AdminOrders from "./pages/adminpages/AdminOrder";
 import Customers from "./pages/adminpages/Customers";
 import Settings from "./pages/adminpages/Settings";
 import HomeManifestEditor from "./pages/adminpages/HomeManifestEditor.jsx";
+import SEO from "./components/SEO.jsx";
 
 const App = () => {
   const [isAppLoading, setIsAppLoading] = useState(true);
   const location = useLocation();
 
-  const isAdminPath = useMemo(() => 
-    location.pathname.startsWith("/admin"), 
-    [location.pathname]
+  const isAdminPath = useMemo(
+    () => location.pathname.startsWith("/admin"),
+    [location.pathname],
   );
 
   useEffect(() => {
@@ -58,29 +59,30 @@ const App = () => {
             from the AnimatePresence loading screen exit and route changes.
           */}
           <AudioProvider>
+            <SEO />
             <AnimatePresence mode="wait">
               {isAppLoading ? (
                 <LoadingScreen key="loader" />
               ) : (
-                <div 
+                <div
                   key="main-content"
                   className="bg-[var(--brand-alt)] min-h-screen selection:bg-white selection:text-black"
                 >
                   {!isAdminPath && <Navbar />}
                   {!isAdminPath && <SystemTicker />}
-                  
-                  <Toaster 
+
+                  <Toaster
                     position="bottom-right"
                     toastOptions={{
                       style: {
-                        background: '#0a0a0a',
-                        color: '#fff',
-                        border: '1px solid rgba(255,255,255,0.1)',
-                        borderRadius: '0px',
-                        fontFamily: 'monospace',
-                        fontSize: '10px',
-                        letterSpacing: '0.2em',
-                        textTransform: 'uppercase',
+                        background: "#0a0a0a",
+                        color: "#fff",
+                        border: "1px solid rgba(255,255,255,0.1)",
+                        borderRadius: "0px",
+                        fontFamily: "monospace",
+                        fontSize: "10px",
+                        letterSpacing: "0.2em",
+                        textTransform: "uppercase",
                       },
                     }}
                   />
@@ -119,11 +121,14 @@ const App = () => {
                       <Route path="/admin" element={<AdminLayout />}>
                         <Route index element={<Dashboard />} />
                         <Route path="dashboard" element={<Dashboard />} />
-                        <Route path="inventory" element={<Inventory/>} /> 
-                        <Route path="orders" element={<AdminOrders/>} />
-                        <Route path="customers" element={<Customers/>} />
-                        <Route path="settings" element={<Settings/>} />
-                        <Route path="interface" element={<HomeManifestEditor/>} />
+                        <Route path="inventory" element={<Inventory />} />
+                        <Route path="orders" element={<AdminOrders />} />
+                        <Route path="customers" element={<Customers />} />
+                        <Route path="settings" element={<Settings />} />
+                        <Route
+                          path="interface"
+                          element={<HomeManifestEditor />}
+                        />
                       </Route>
                     </Routes>
                   </AnimatePresence>
