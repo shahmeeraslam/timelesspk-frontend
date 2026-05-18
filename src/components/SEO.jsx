@@ -8,7 +8,7 @@ const SEO = ({
   url = "", 
   type = "website" 
 }) => {
-  const siteTitle = "VANGUARD";
+  const siteTitle = "VINTAGE CLASSIC";
   const baseUrl = "https://timelesspk-frontend.vercel.app";
 
   // --- ERROR PREVENTION LOGIC ---
